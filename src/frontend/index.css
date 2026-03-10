@@ -1,0 +1,142 @@
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/assets/fonts/BricolageGrotesque-Variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Outfit";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/assets/fonts/Outfit-Variable.woff2") format("woff2");
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Deep space dark theme */
+    --background: 0.12 0.008 260;
+    --foreground: 0.97 0.005 90;
+
+    --card: 0.14 0.01 260;
+    --card-foreground: 0.97 0.005 90;
+
+    --popover: 0.14 0.01 260;
+    --popover-foreground: 0.97 0.005 90;
+
+    /* Electric teal primary */
+    --primary: 0.78 0.14 185;
+    --primary-foreground: 0.1 0.01 260;
+
+    --secondary: 0.18 0.015 260;
+    --secondary-foreground: 0.97 0.005 90;
+
+    --muted: 0.18 0.01 260;
+    --muted-foreground: 0.55 0.02 250;
+
+    --accent: 0.78 0.14 185;
+    --accent-foreground: 0.1 0.01 260;
+
+    --destructive: 0.55 0.2 25;
+    --destructive-foreground: 0.97 0.005 90;
+
+    --border: 0.22 0.015 260;
+    --input: 0.22 0.015 260;
+    --ring: 0.78 0.14 185;
+
+    --radius: 0.75rem;
+
+    --chart-1: 0.78 0.14 185;
+    --chart-2: 0.65 0.12 210;
+    --chart-3: 0.55 0.1 230;
+    --chart-4: 0.45 0.08 250;
+    --chart-5: 0.35 0.06 270;
+
+    --sidebar: 0.11 0.008 260;
+    --sidebar-foreground: 0.97 0.005 90;
+    --sidebar-primary: 0.78 0.14 185;
+    --sidebar-primary-foreground: 0.1 0.01 260;
+    --sidebar-accent: 0.18 0.015 260;
+    --sidebar-accent-foreground: 0.97 0.005 90;
+    --sidebar-border: 0.22 0.015 260;
+    --sidebar-ring: 0.78 0.14 185;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Outfit", sans-serif;
+  }
+}
+
+/* Animated orb keyframes */
+@keyframes float-orb-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+@keyframes float-orb-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 30px) scale(0.92); }
+  66% { transform: translate(25px, -25px) scale(1.08); }
+}
+
+@keyframes float-orb-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20px, 40px) scale(1.1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px 2px oklch(0.78 0.14 185 / 0.3), 0 0 60px 10px oklch(0.78 0.14 185 / 0.1); }
+  50% { box-shadow: 0 0 30px 6px oklch(0.78 0.14 185 / 0.5), 0 0 80px 20px oklch(0.78 0.14 185 / 0.2); }
+}
+
+@keyframes grid-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.orb-1 {
+  animation: float-orb-1 12s ease-in-out infinite;
+}
+.orb-2 {
+  animation: float-orb-2 16s ease-in-out infinite;
+}
+.orb-3 {
+  animation: float-orb-3 10s ease-in-out infinite;
+}
+
+.btn-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    oklch(0.78 0.14 185) 0%,
+    oklch(0.92 0.06 185) 40%,
+    oklch(0.78 0.14 185) 60%,
+    oklch(0.65 0.18 200) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 4s linear infinite;
+}
