@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAdmin } from "../contexts/AdminContext";
 import CameraPage from "./CameraPage";
 import DirectMessagesPage from "./DirectMessagesPage";
 import ExplorePage from "./ExplorePage";
@@ -484,7 +485,9 @@ function SearchModal({ onClose }: SearchModalProps) {
 }
 
 // ── Main HomeFeed ─────────────────────────────────────────────────────────────
-export default function HomeFeed() {
+export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
+  const { featureFlags, pinnedAnnouncement } = useAdmin();
+  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
   const [activeTab, setActiveTab] = useState<NavTab>("home");
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [savedPosts, setSavedPosts] = useState<Set<number>>(new Set());
@@ -552,9 +555,9 @@ export default function HomeFeed() {
       deltaTime < 350
     ) {
       if (deltaX > 0) {
-        setActiveTab("camera");
+        if (featureFlags.camera) setActiveTab("camera");
       } else {
-        setActiveTab("dms");
+        if (featureFlags.dms) setActiveTab("dms");
       }
     }
   };
@@ -833,6 +836,7 @@ export default function HomeFeed() {
                   setUserDisplayName(name);
                   if (photo !== undefined) setUserProfilePhoto(photo);
                 }}
+                onOpenAdmin={onOpenAdmin}
               />
             </main>
           ) : activeTab === "explore" ? (
@@ -845,117 +849,140 @@ export default function HomeFeed() {
             </main>
           ) : (
             <main className="flex-1 pt-[54px] pb-[60px]">
-              {/* ── Stories Strip ── */}
-              <section
-                data-ocid="stories.section"
-                className="border-b border-white/[0.06] py-3"
-              >
+              {/* ── Pinned Announcement ── */}
+              {pinnedAnnouncement && !announcementDismissed && (
                 <div
-                  className="flex gap-3 px-3 overflow-x-auto"
-                  style={{
-                    scrollbarWidth: "none",
-                    msOverflowStyle: "none",
-                  }}
+                  data-ocid="admin.pinned_announcement.section"
+                  className="mx-3 mt-2 mb-1 px-3 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-start gap-2"
                 >
-                  {STORIES.map((story, index) => {
-                    const isViewed = viewedStories.has(story.id);
+                  <span className="text-amber-400 text-base leading-none mt-0.5">
+                    📌
+                  </span>
+                  <p className="flex-1 text-[12px] text-amber-200 leading-snug">
+                    {pinnedAnnouncement}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setAnnouncementDismissed(true)}
+                    className="text-amber-400/60 hover:text-amber-400 transition-colors ml-1"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+              {/* ── Stories Strip ── */}
+              {featureFlags.stories && (
+                <section
+                  data-ocid="stories.section"
+                  className="border-b border-white/[0.06] py-3"
+                >
+                  <div
+                    className="flex gap-3 px-3 overflow-x-auto"
+                    style={{
+                      scrollbarWidth: "none",
+                      msOverflowStyle: "none",
+                    }}
+                  >
+                    {STORIES.map((story, index) => {
+                      const isViewed = viewedStories.has(story.id);
 
-                    return (
-                      <motion.button
-                        key={story.id}
-                        type="button"
-                        data-ocid={
-                          story.isOwn
-                            ? "stories.add_button"
-                            : `stories.item.${index}`
-                        }
-                        onClick={() => handleStoryTap(story.id)}
-                        initial={{ opacity: 0, scale: 0.85 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{
-                          delay: index * 0.05,
-                          duration: 0.3,
-                          ease: "easeOut",
-                        }}
-                        className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[62px]"
-                        aria-label={
-                          story.isOwn
-                            ? "Add your story"
-                            : `View ${story.username}'s story`
-                        }
-                      >
-                        {/* Ring + Avatar */}
-                        <div className="relative">
-                          <div
-                            className={`p-[2.5px] rounded-full transition-all duration-300 ${
-                              story.isOwn
-                                ? `bg-gradient-to-tr ${story.avatarGradient}`
-                                : isViewed
-                                  ? "bg-white/20"
-                                  : `bg-gradient-to-tr ${story.avatarGradient}`
-                            }`}
-                            style={{
-                              filter:
-                                isViewed && !story.isOwn
-                                  ? "saturate(0) brightness(0.5)"
-                                  : undefined,
-                            }}
-                          >
-                            <div className="p-[2px] rounded-full bg-background">
-                              <div className="h-[52px] w-[52px] rounded-full bg-background flex items-center justify-center overflow-hidden">
-                                <div
-                                  className={`h-full w-full rounded-full bg-gradient-to-br ${story.avatarGradient} flex items-center justify-center`}
-                                  style={{
-                                    filter:
-                                      isViewed && !story.isOwn
-                                        ? "saturate(0) brightness(0.5)"
-                                        : undefined,
-                                  }}
-                                >
-                                  {story.isOwn && userProfilePhoto ? (
-                                    <img
-                                      src={userProfilePhoto}
-                                      alt="Your story"
-                                      className="h-full w-full rounded-full object-cover"
-                                    />
-                                  ) : (
-                                    <span className="text-[13px] font-bold text-white tracking-tight">
-                                      {story.isOwn
-                                        ? getInitials(userDisplayName)
-                                        : story.initials}
-                                    </span>
-                                  )}
+                      return (
+                        <motion.button
+                          key={story.id}
+                          type="button"
+                          data-ocid={
+                            story.isOwn
+                              ? "stories.add_button"
+                              : `stories.item.${index}`
+                          }
+                          onClick={() => handleStoryTap(story.id)}
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{
+                            delay: index * 0.05,
+                            duration: 0.3,
+                            ease: "easeOut",
+                          }}
+                          className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[62px]"
+                          aria-label={
+                            story.isOwn
+                              ? "Add your story"
+                              : `View ${story.username}'s story`
+                          }
+                        >
+                          {/* Ring + Avatar */}
+                          <div className="relative">
+                            <div
+                              className={`p-[2.5px] rounded-full transition-all duration-300 ${
+                                story.isOwn
+                                  ? `bg-gradient-to-tr ${story.avatarGradient}`
+                                  : isViewed
+                                    ? "bg-white/20"
+                                    : `bg-gradient-to-tr ${story.avatarGradient}`
+                              }`}
+                              style={{
+                                filter:
+                                  isViewed && !story.isOwn
+                                    ? "saturate(0) brightness(0.5)"
+                                    : undefined,
+                              }}
+                            >
+                              <div className="p-[2px] rounded-full bg-background">
+                                <div className="h-[52px] w-[52px] rounded-full bg-background flex items-center justify-center overflow-hidden">
+                                  <div
+                                    className={`h-full w-full rounded-full bg-gradient-to-br ${story.avatarGradient} flex items-center justify-center`}
+                                    style={{
+                                      filter:
+                                        isViewed && !story.isOwn
+                                          ? "saturate(0) brightness(0.5)"
+                                          : undefined,
+                                    }}
+                                  >
+                                    {story.isOwn && userProfilePhoto ? (
+                                      <img
+                                        src={userProfilePhoto}
+                                        alt="Your story"
+                                        className="h-full w-full rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <span className="text-[13px] font-bold text-white tracking-tight">
+                                        {story.isOwn
+                                          ? getInitials(userDisplayName)
+                                          : story.initials}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
+
+                            {story.isOwn && (
+                              <div className="absolute -bottom-0.5 -right-0.5 h-[20px] w-[20px] rounded-full bg-primary border-2 border-background flex items-center justify-center z-10">
+                                <Plus
+                                  className="h-[10px] w-[10px] text-primary-foreground"
+                                  strokeWidth={3}
+                                />
+                              </div>
+                            )}
                           </div>
 
-                          {story.isOwn && (
-                            <div className="absolute -bottom-0.5 -right-0.5 h-[20px] w-[20px] rounded-full bg-primary border-2 border-background flex items-center justify-center z-10">
-                              <Plus
-                                className="h-[10px] w-[10px] text-primary-foreground"
-                                strokeWidth={3}
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        <span
-                          className={`text-[10px] font-medium leading-tight text-center truncate w-full transition-colors ${
-                            story.isOwn
-                              ? "text-foreground"
-                              : isViewed
-                                ? "text-muted-foreground/40"
-                                : "text-foreground/80"
-                          }`}
-                        >
-                          {story.username}
-                        </span>
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </section>
+                          <span
+                            className={`text-[10px] font-medium leading-tight text-center truncate w-full transition-colors ${
+                              story.isOwn
+                                ? "text-foreground"
+                                : isViewed
+                                  ? "text-muted-foreground/40"
+                                  : "text-foreground/80"
+                            }`}
+                          >
+                            {story.username}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
 
               {/* ── Feed Posts ── */}
               <div data-ocid="feed.list">
@@ -1160,49 +1187,55 @@ export default function HomeFeed() {
               </span>
             </button>
 
-            <button
-              type="button"
-              data-ocid="nav.explore.tab"
-              onClick={() => setActiveTab("explore")}
-              aria-label="Explore"
-              className={`flex flex-col items-center gap-0.5 px-3 py-1 transition-colors ${
-                activeTab === "explore"
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Compass
-                className={`h-[22px] w-[22px] ${
+            {featureFlags.explore && (
+              <button
+                type="button"
+                data-ocid="nav.explore.tab"
+                onClick={() => setActiveTab("explore")}
+                aria-label="Explore"
+                className={`flex flex-col items-center gap-0.5 px-3 py-1 transition-colors ${
                   activeTab === "explore"
-                    ? "fill-primary/15 stroke-primary"
-                    : ""
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
-              />
-              <span className="text-[9px] font-medium tracking-wide uppercase">
-                Explore
-              </span>
-            </button>
+              >
+                <Compass
+                  className={`h-[22px] w-[22px] ${
+                    activeTab === "explore"
+                      ? "fill-primary/15 stroke-primary"
+                      : ""
+                  }`}
+                />
+                <span className="text-[9px] font-medium tracking-wide uppercase">
+                  Explore
+                </span>
+              </button>
+            )}
 
-            <button
-              type="button"
-              data-ocid="nav.reels.tab"
-              onClick={() => setActiveTab("reels")}
-              aria-label="Reels"
-              className={`flex flex-col items-center gap-0.5 px-3 py-1 transition-colors ${
-                activeTab === "reels"
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Film
-                className={`h-[22px] w-[22px] ${
-                  activeTab === "reels" ? "fill-primary/15 stroke-primary" : ""
+            {featureFlags.reels && (
+              <button
+                type="button"
+                data-ocid="nav.reels.tab"
+                onClick={() => setActiveTab("reels")}
+                aria-label="Reels"
+                className={`flex flex-col items-center gap-0.5 px-3 py-1 transition-colors ${
+                  activeTab === "reels"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
-              />
-              <span className="text-[9px] font-medium tracking-wide uppercase">
-                Reels
-              </span>
-            </button>
+              >
+                <Film
+                  className={`h-[22px] w-[22px] ${
+                    activeTab === "reels"
+                      ? "fill-primary/15 stroke-primary"
+                      : ""
+                  }`}
+                />
+                <span className="text-[9px] font-medium tracking-wide uppercase">
+                  Reels
+                </span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -1216,33 +1249,35 @@ export default function HomeFeed() {
               </div>
             </button>
 
-            <button
-              type="button"
-              data-ocid="nav.notifications.tab"
-              onClick={() => setActiveTab("notifications")}
-              aria-label="Activity"
-              className={`flex flex-col items-center gap-0.5 px-3 py-1 transition-colors relative ${
-                activeTab === "notifications"
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <div className="relative">
-                <Heart
-                  className={`h-[22px] w-[22px] ${
-                    activeTab === "notifications"
-                      ? "fill-primary/20 stroke-primary"
-                      : ""
-                  }`}
-                />
-                {activeTab !== "notifications" && (
-                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500" />
-                )}
-              </div>
-              <span className="text-[9px] font-medium tracking-wide uppercase">
-                Activity
-              </span>
-            </button>
+            {featureFlags.notifications && (
+              <button
+                type="button"
+                data-ocid="nav.notifications.tab"
+                onClick={() => setActiveTab("notifications")}
+                aria-label="Activity"
+                className={`flex flex-col items-center gap-0.5 px-3 py-1 transition-colors relative ${
+                  activeTab === "notifications"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <div className="relative">
+                  <Heart
+                    className={`h-[22px] w-[22px] ${
+                      activeTab === "notifications"
+                        ? "fill-primary/20 stroke-primary"
+                        : ""
+                    }`}
+                  />
+                  {activeTab !== "notifications" && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500" />
+                  )}
+                </div>
+                <span className="text-[9px] font-medium tracking-wide uppercase">
+                  Activity
+                </span>
+              </button>
+            )}
 
             <button
               type="button"

@@ -9,9 +9,19 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, CheckCircle2, Grid3x3, Lock, Play, Tag } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  Grid3x3,
+  Lock,
+  Play,
+  Settings2,
+  Shield,
+  Tag,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
+import { useAdmin } from "../contexts/AdminContext";
 
 type ProfileTab = "posts" | "reels" | "tagged";
 
@@ -118,13 +128,16 @@ interface ProfilePageProps {
   displayName: string;
   profilePhoto: string | null;
   onUpdateProfile: (name: string, photo?: string) => void;
+  onOpenAdmin: () => void;
 }
 
 export default function ProfilePage({
   displayName,
   profilePhoto,
   onUpdateProfile,
+  onOpenAdmin,
 }: ProfilePageProps) {
+  const { monetizationTargets } = useAdmin();
   const [activeTab, setActiveTab] = useState<ProfileTab>("posts");
   const [editOpen, setEditOpen] = useState(false);
 
@@ -185,7 +198,7 @@ export default function ProfilePage({
   };
 
   // Creator Dashboard data
-  const followersGoal = 20000;
+  const followersGoal = monetizationTargets.followers;
   const followersCount = 12400;
   const followersProgress = Math.min(
     (followersCount / followersGoal) * 100,
@@ -193,7 +206,7 @@ export default function ProfilePage({
   );
   const followersAchieved = followersCount >= followersGoal;
 
-  const viewsGoal = 10_000_000;
+  const viewsGoal = monetizationTargets.views;
   const viewsCount = 847_000;
   const viewsProgress = Math.min((viewsCount / viewsGoal) * 100, 100);
   const viewsAchieved = viewsCount >= viewsGoal;
@@ -300,6 +313,18 @@ export default function ProfilePage({
           className="w-full max-w-[340px] py-2.5 rounded-xl border border-white/20 text-[13px] font-semibold text-foreground/90 bg-white/[0.05] hover:bg-white/[0.1] active:scale-[0.98] transition-all"
         >
           Edit Profile
+        </button>
+
+        {/* ── Admin Panel Button ── */}
+        <button
+          type="button"
+          data-ocid="profile.admin_panel.button"
+          onClick={onOpenAdmin}
+          className="w-full max-w-[340px] py-2.5 rounded-xl flex items-center justify-center gap-2 text-[13px] font-semibold text-white bg-gradient-to-r from-purple-700/80 to-indigo-600/80 border border-purple-500/30 hover:from-purple-600/90 hover:to-indigo-500/90 active:scale-[0.98] transition-all shadow-md"
+        >
+          <Shield className="h-4 w-4" />
+          Admin Panel
+          <Settings2 className="h-3.5 w-3.5 opacity-70" />
         </button>
 
         {/* ── Creator Dashboard ── */}
