@@ -1,27 +1,27 @@
 # Rohit AI Tech
 
 ## Current State
-- App has Welcome, Home Feed, Reels, and Profile pages
-- Bottom nav has 6 tabs: Home, Explore (Compass icon), Reels, Create, Alerts, Profile
-- The Explore tab currently does nothing (activeTab="explore" but no page rendered)
-- Navigation state is managed inside HomeFeed.tsx
+- Creator Dashboard shows Monetization Tracker with followersGoal=2000 and viewsGoal=10M
+- No Monetize status badge or wallet/bank details feature
+- Reels have likes, comments, shares counts but no view counts
 
 ## Requested Changes (Diff)
 
 ### Add
-- `ExplorePage.tsx`: full Explore/Discover page with:
-  - Sticky search bar at top with magnifying glass icon and placeholder
-  - Instagram-style mosaic grid below: mix of tall (2-row span), wide (2-col span), and 1x1 cells
-  - 12+ sample content tiles (photos and videos with gradient placeholders)
-  - Video tiles show a Play icon overlay
-  - Smooth entrance animations
+- Monetize status badge (green, active) when both follower and view goals are met
+- Wallet section on Profile page showing earnings balance and a Bank Details form (Account Number, IFSC, Bank Name) accessible via a button
+- View count display on each Reel card (below or alongside existing stats)
 
 ### Modify
-- `HomeFeed.tsx`: import and render `<ExplorePage />` when `activeTab === "explore"` (same pattern as ProfilePage and ReelsPage)
+- followersGoal: 2000 → 20000 (20K)
+- viewsGoal stays at 10,000,000 (10M) -- already correct
+- Monetize activates only when BOTH goals are achieved
+- REELS data: add viewCount field to each reel; show views count in the action bar or bottom info
 
 ### Remove
 - Nothing removed
 
 ## Implementation Plan
-1. Create `src/frontend/src/pages/ExplorePage.tsx` with search bar + mosaic grid
-2. Update `HomeFeed.tsx` to import and render ExplorePage on the explore tab
+1. ProfilePage.tsx: update followersGoal to 20000; derive monetizeActive = followersAchieved && viewsAchieved; show Monetize badge when active
+2. ProfilePage.tsx: add Wallet card below Creator Dashboard with balance display and a Bank Details sheet (Account Number, IFSC, Bank Name fields + Save button)
+3. ReelsPage.tsx: add views field to REELS data; display view count (Eye icon + formatted number) in the right action bar or bottom area

@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Music2, Send } from "lucide-react";
+import { Eye, Heart, MessageCircle, Music2, Send } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useRef, useState } from "react";
 
@@ -15,6 +15,7 @@ const REELS = [
     likes: 48200,
     comments: 1240,
     shares: 3800,
+    views: 1_200_000,
   },
   {
     id: 2,
@@ -28,6 +29,7 @@ const REELS = [
     likes: 29100,
     comments: 870,
     shares: 2100,
+    views: 650_000,
   },
   {
     id: 3,
@@ -41,6 +43,7 @@ const REELS = [
     likes: 61400,
     comments: 2090,
     shares: 5600,
+    views: 2_100_000,
   },
   {
     id: 4,
@@ -54,6 +57,7 @@ const REELS = [
     likes: 34700,
     comments: 1100,
     shares: 2900,
+    views: 890_000,
   },
   {
     id: 5,
@@ -67,10 +71,12 @@ const REELS = [
     likes: 52800,
     comments: 1780,
     shares: 4300,
+    views: 1_750_000,
   },
 ];
 
 function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   return String(n);
 }
@@ -210,6 +216,16 @@ export default function ReelsPage() {
 
             {/* ── Right vertical action bar ── */}
             <div className="absolute right-3 bottom-[120px] z-30 flex flex-col items-center gap-5">
+              {/* Views */}
+              <div className="flex flex-col items-center gap-1">
+                <div className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+                  <Eye className="h-[22px] w-[22px] text-white/80" />
+                </div>
+                <span className="text-white text-[11px] font-semibold drop-shadow">
+                  {formatCount(reel.views)}
+                </span>
+              </div>
+
               {/* Like */}
               <div className="flex flex-col items-center gap-1">
                 <button

@@ -1,6 +1,17 @@
-import { Grid3x3, Play, Tag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
+import { Camera, CheckCircle2, Grid3x3, Lock, Play, Tag } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type ProfileTab = "posts" | "reels" | "tagged";
 
@@ -97,8 +108,97 @@ const PROFILE_TAB_ICONS = [
   { key: "tagged" as ProfileTab, icon: Tag, label: "Tagged" },
 ];
 
-export default function ProfilePage() {
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toString();
+}
+
+interface ProfilePageProps {
+  displayName: string;
+  profilePhoto: string | null;
+  onUpdateProfile: (name: string, photo?: string) => void;
+}
+
+export default function ProfilePage({
+  displayName,
+  profilePhoto,
+  onUpdateProfile,
+}: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>("posts");
+  const [editOpen, setEditOpen] = useState(false);
+
+  // Profile state
+  const [localPhoto, setLocalPhoto] = useState<string | null>(profilePhoto);
+  const [username, setUsername] = useState("@rohit.ai");
+  const [bio, setBio] = useState(
+    "Building the future with AI ✨ | Tech Creator | Innovator",
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getInitials = (name: string) =>
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase();
+
+  // Edit form state
+  const [draftName, setDraftName] = useState(displayName);
+  const [draftUsername, setDraftUsername] = useState(username);
+  const [draftBio, setDraftBio] = useState(bio);
+
+  // Wallet state
+  const [bankOpen, setBankOpen] = useState(false);
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [savedBank, setSavedBank] = useState(false);
+
+  const openEdit = () => {
+    setDraftName(displayName);
+    setDraftUsername(username);
+    setDraftBio(bio);
+    setEditOpen(true);
+  };
+
+  const handleSave = () => {
+    onUpdateProfile(draftName);
+    setUsername(draftUsername);
+    setBio(draftBio);
+    setEditOpen(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setLocalPhoto(url);
+    onUpdateProfile(displayName, url);
+  };
+
+  const handleBankSave = () => {
+    setSavedBank(true);
+    setBankOpen(false);
+  };
+
+  // Creator Dashboard data
+  const followersGoal = 20000;
+  const followersCount = 12400;
+  const followersProgress = Math.min(
+    (followersCount / followersGoal) * 100,
+    100,
+  );
+  const followersAchieved = followersCount >= followersGoal;
+
+  const viewsGoal = 10_000_000;
+  const viewsCount = 847_000;
+  const viewsProgress = Math.min((viewsCount / viewsGoal) * 100, 100);
+  const viewsAchieved = viewsCount >= viewsGoal;
+
+  const monetizeActive = followersAchieved && viewsAchieved;
 
   return (
     <div
@@ -114,7 +214,6 @@ export default function ProfilePage() {
       >
         {/* ── Circular Profile Picture ── */}
         <div className="relative">
-          {/* Glow backdrop */}
           <div
             className="absolute inset-0 rounded-full blur-xl opacity-50"
             style={{
@@ -123,29 +222,52 @@ export default function ProfilePage() {
               transform: "scale(1.3)",
             }}
           />
-          {/* Gradient ring */}
-          <div className="relative p-[3px] rounded-full bg-gradient-to-tr from-yellow-400 via-amber-500 to-orange-600">
-            {/* White gap ring */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            data-ocid="profile.upload_button"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <button
+            type="button"
+            aria-label="Change profile photo"
+            onClick={() => fileInputRef.current?.click()}
+            className="relative p-[3px] rounded-full bg-gradient-to-tr from-yellow-400 via-amber-500 to-orange-600 group cursor-pointer"
+          >
             <div className="p-[3px] rounded-full bg-background">
-              <div className="h-24 w-24 rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-600 flex items-center justify-center">
-                <span className="text-[28px] font-black text-white tracking-tight select-none">
-                  RA
-                </span>
+              <div className="h-24 w-24 rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-600 flex items-center justify-center overflow-hidden relative">
+                {localPhoto ? (
+                  <img
+                    src={localPhoto}
+                    alt="Profile"
+                    className="h-full w-full object-cover rounded-full"
+                  />
+                ) : (
+                  <span className="text-[28px] font-black text-white tracking-tight select-none">
+                    {getInitials(displayName)}
+                  </span>
+                )}
+                {/* Camera overlay on hover */}
+                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <Camera className="h-7 w-7 text-white" />
+                </div>
               </div>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* ── Name + Username ── */}
         <div className="text-center flex flex-col gap-0.5">
           <h1 className="text-[18px] font-bold text-foreground leading-tight tracking-tight">
-            Rohit AI Tech
+            {displayName}
           </h1>
           <p className="text-[13px] text-muted-foreground font-medium">
-            @rohit.ai
+            {username}
           </p>
           <p className="text-[12px] text-foreground/70 mt-1 leading-snug max-w-[260px] mx-auto">
-            Building the future with AI ✨ | Tech Creator | Innovator
+            {bio}
           </p>
         </div>
 
@@ -174,10 +296,228 @@ export default function ProfilePage() {
         <button
           type="button"
           data-ocid="profile.edit_button"
+          onClick={openEdit}
           className="w-full max-w-[340px] py-2.5 rounded-xl border border-white/20 text-[13px] font-semibold text-foreground/90 bg-white/[0.05] hover:bg-white/[0.1] active:scale-[0.98] transition-all"
         >
           Edit Profile
         </button>
+
+        {/* ── Creator Dashboard ── */}
+        <motion.div
+          data-ocid="profile.creator_dashboard.section"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="w-full max-w-[340px]"
+        >
+          {/* Gradient border wrapper */}
+          <div
+            className="p-[1.5px] rounded-2xl"
+            style={{
+              background:
+                "linear-gradient(135deg, oklch(0.62 0.22 300), oklch(0.75 0.18 55))",
+            }}
+          >
+            <div className="rounded-2xl bg-[oklch(0.10_0.01_270)] p-4 space-y-4">
+              {/* Title */}
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[15px]">✦</span>
+                  <h2 className="text-[14px] font-bold text-foreground">
+                    Creator Dashboard
+                  </h2>
+                </div>
+                <p className="text-[11px] text-muted-foreground/60 pl-6">
+                  Monetization Tracker
+                </p>
+              </div>
+
+              {/* Followers Milestone */}
+              <div
+                data-ocid="profile.followers_milestone.card"
+                className="space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[12px] font-semibold text-foreground/90">
+                      Followers Milestone
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/50">
+                      Goal: {formatNumber(followersGoal)} followers
+                    </p>
+                  </div>
+                  {followersAchieved && (
+                    <div className="flex items-center gap-1 bg-emerald-500/15 border border-emerald-500/30 rounded-full px-2.5 py-1">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                      <span className="text-[10px] font-bold text-emerald-400">
+                        Achieved
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="relative h-2 rounded-full overflow-hidden bg-white/[0.06]">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${followersProgress}%` }}
+                    transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+                    className="absolute left-0 top-0 h-full rounded-full"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, oklch(0.65 0.2 155), oklch(0.75 0.22 165))",
+                      boxShadow: "0 0 8px oklch(0.65 0.2 155 / 0.5)",
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground/50 text-right">
+                  {formatNumber(followersCount)} / {formatNumber(followersGoal)}
+                </p>
+              </div>
+
+              {/* Views Milestone */}
+              <div
+                data-ocid="profile.views_milestone.card"
+                className="space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[12px] font-semibold text-foreground/90">
+                      Views Milestone
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/50">
+                      Goal: {formatNumber(viewsGoal)} views
+                    </p>
+                  </div>
+                  <span className="text-[10px] text-amber-400/80 font-medium">
+                    {viewsProgress.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="relative h-2 rounded-full overflow-hidden bg-white/[0.06]">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${viewsProgress}%` }}
+                    transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                    className="absolute left-0 top-0 h-full rounded-full"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, oklch(0.72 0.18 55), oklch(0.75 0.22 70))",
+                      boxShadow: "0 0 8px oklch(0.72 0.18 55 / 0.5)",
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground/50 text-right">
+                  {formatNumber(viewsCount)} / {formatNumber(viewsGoal)}
+                </p>
+              </div>
+
+              {/* Monetize Status */}
+              <div
+                data-ocid="profile.monetize_status.card"
+                className="pt-1 border-t border-white/[0.07]"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] font-semibold text-foreground/90">
+                    Monetize Status
+                  </p>
+                  {monetizeActive ? (
+                    <div
+                      className="flex items-center gap-1.5 bg-emerald-500/15 border border-emerald-500/40 rounded-full px-3 py-1"
+                      style={{
+                        boxShadow: "0 0 12px oklch(0.72 0.18 155 / 0.35)",
+                      }}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                      <span className="text-[11px] font-bold text-emerald-400">
+                        Monetize Active
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-end gap-0.5">
+                      <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/10 rounded-full px-3 py-1">
+                        <Lock className="h-3 w-3 text-muted-foreground/50" />
+                        <span className="text-[11px] font-medium text-muted-foreground/50">
+                          Monetize Locked
+                        </span>
+                      </div>
+                      <p className="text-[9px] text-muted-foreground/35 text-right">
+                        Reach both goals to unlock
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ── Wallet Card ── */}
+        <motion.div
+          data-ocid="profile.wallet.section"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+          className="w-full max-w-[340px]"
+        >
+          <div
+            className="p-[1.5px] rounded-2xl"
+            style={{
+              background:
+                "linear-gradient(135deg, oklch(0.72 0.18 55), oklch(0.62 0.22 300))",
+            }}
+          >
+            <div className="rounded-2xl bg-[oklch(0.10_0.01_270)] p-4 space-y-3">
+              {/* Title */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[15px]">💰</span>
+                    <h2 className="text-[14px] font-bold text-foreground">
+                      Wallet
+                    </h2>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/60 pl-6">
+                    Earnings &amp; Payouts
+                  </p>
+                </div>
+                {savedBank && (
+                  <div className="flex items-center gap-1 bg-emerald-500/15 border border-emerald-500/30 rounded-full px-2.5 py-1">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                    <span className="text-[10px] font-bold text-emerald-400">
+                      Bank Linked
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Balance */}
+              <div className="flex flex-col items-center py-3">
+                <p className="text-[11px] text-muted-foreground/50 mb-1">
+                  Available Balance
+                </p>
+                <p
+                  className="text-[32px] font-black tracking-tight"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, oklch(0.85 0.18 70), oklch(0.75 0.22 55))",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  ₹ 0.00
+                </p>
+              </div>
+
+              {/* Add Bank Details button */}
+              <button
+                type="button"
+                data-ocid="wallet.open_modal_button"
+                onClick={() => setBankOpen(true)}
+                className="w-full py-2.5 rounded-xl border border-amber-500/30 text-[13px] font-semibold text-amber-400/90 bg-amber-500/[0.06] hover:bg-amber-500/[0.12] active:scale-[0.98] transition-all"
+              >
+                {savedBank ? "Edit Bank Details" : "Add Bank Details"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
 
       {/* ── Tab Bar ── */}
@@ -227,16 +567,13 @@ export default function ProfilePage() {
             className="relative overflow-hidden cursor-pointer active:opacity-80 transition-opacity"
             style={{ aspectRatio: "1/1" }}
           >
-            {/* Gradient base */}
             <div
               className={`absolute inset-0 bg-gradient-to-br ${item.gradient}`}
             />
-            {/* Accent glow */}
             <div
               className="absolute inset-0"
               style={{ background: item.accent }}
             />
-            {/* Video play overlay */}
             {item.isVideo && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="h-8 w-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
@@ -247,6 +584,169 @@ export default function ProfilePage() {
           </motion.div>
         ))}
       </motion.div>
+
+      {/* ── Edit Profile Sheet ── */}
+      <Sheet open={editOpen} onOpenChange={setEditOpen}>
+        <SheetContent
+          data-ocid="profile.edit.sheet"
+          side="bottom"
+          className="bg-[oklch(0.11_0.01_270)] border-t border-white/10 rounded-t-2xl px-5 py-6"
+        >
+          <SheetHeader className="mb-5">
+            <SheetTitle className="text-foreground text-[16px] font-bold">
+              Edit Profile
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="space-y-4">
+            {/* Display Name */}
+            <div className="space-y-1.5">
+              <Label className="text-[12px] text-muted-foreground font-medium">
+                Display Name
+              </Label>
+              <Input
+                data-ocid="profile.edit.name_input"
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                className="bg-white/[0.06] border-white/10 text-foreground focus:ring-fuchsia-500/50 rounded-xl"
+                placeholder="Your display name"
+              />
+            </div>
+
+            {/* Username */}
+            <div className="space-y-1.5">
+              <Label className="text-[12px] text-muted-foreground font-medium">
+                Username
+              </Label>
+              <Input
+                data-ocid="profile.edit.username_input"
+                value={draftUsername}
+                onChange={(e) => setDraftUsername(e.target.value)}
+                className="bg-white/[0.06] border-white/10 text-foreground focus:ring-fuchsia-500/50 rounded-xl"
+                placeholder="@username"
+              />
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-1.5">
+              <Label className="text-[12px] text-muted-foreground font-medium">
+                Bio
+              </Label>
+              <Textarea
+                data-ocid="profile.edit.bio_textarea"
+                value={draftBio}
+                onChange={(e) => setDraftBio(e.target.value)}
+                rows={3}
+                className="bg-white/[0.06] border-white/10 text-foreground focus:ring-fuchsia-500/50 rounded-xl resize-none"
+                placeholder="Tell the world about yourself"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-1">
+              <Button
+                type="button"
+                data-ocid="profile.edit.cancel_button"
+                variant="outline"
+                onClick={() => setEditOpen(false)}
+                className="flex-1 border-white/15 bg-white/[0.04] text-foreground/80 hover:bg-white/[0.08] rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                data-ocid="profile.edit.save_button"
+                onClick={handleSave}
+                className="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white border-0 rounded-xl hover:opacity-90"
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* ── Bank Details Sheet ── */}
+      <Sheet open={bankOpen} onOpenChange={setBankOpen}>
+        <SheetContent
+          data-ocid="wallet.sheet"
+          side="bottom"
+          className="bg-[oklch(0.11_0.01_270)] border-t border-white/10 rounded-t-2xl px-5 py-6"
+        >
+          <SheetHeader className="mb-5">
+            <SheetTitle className="text-foreground text-[16px] font-bold">
+              Bank Details
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="space-y-4">
+            {/* Account Number */}
+            <div className="space-y-1.5">
+              <Label className="text-[12px] text-muted-foreground font-medium">
+                Account Number
+              </Label>
+              <Input
+                data-ocid="wallet.account_number.input"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className="bg-white/[0.06] border-white/10 text-foreground focus:ring-amber-500/50 rounded-xl"
+                placeholder="Enter account number"
+                inputMode="numeric"
+              />
+            </div>
+
+            {/* IFSC Code */}
+            <div className="space-y-1.5">
+              <Label className="text-[12px] text-muted-foreground font-medium">
+                IFSC Code
+              </Label>
+              <Input
+                data-ocid="wallet.ifsc.input"
+                value={ifscCode}
+                onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
+                className="bg-white/[0.06] border-white/10 text-foreground focus:ring-amber-500/50 rounded-xl uppercase"
+                placeholder="e.g. SBIN0001234"
+                maxLength={11}
+              />
+            </div>
+
+            {/* Bank Name */}
+            <div className="space-y-1.5">
+              <Label className="text-[12px] text-muted-foreground font-medium">
+                Bank Name
+              </Label>
+              <Input
+                data-ocid="wallet.bank_name.input"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                className="bg-white/[0.06] border-white/10 text-foreground focus:ring-amber-500/50 rounded-xl"
+                placeholder="e.g. State Bank of India"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-1">
+              <Button
+                type="button"
+                data-ocid="wallet.cancel_button"
+                variant="outline"
+                onClick={() => setBankOpen(false)}
+                className="flex-1 border-white/15 bg-white/[0.04] text-foreground/80 hover:bg-white/[0.08] rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                data-ocid="wallet.save_button"
+                onClick={handleBankSave}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 rounded-xl hover:opacity-90"
+              >
+                Save Details
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

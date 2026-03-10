@@ -492,23 +492,57 @@ export default function HomeFeed() {
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
 
+  // User profile state (lifted to top level for cross-app sharing)
+  const [userDisplayName, setUserDisplayName] = useState("Rohit Mehra");
+  const [userProfilePhoto, setUserProfilePhoto] = useState<string | null>(null);
+
+  const getInitials = (name: string) =>
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase();
+
   // Search modal state
   const [searchOpen, setSearchOpen] = useState(false);
 
+  // Swipe gesture tracking
   const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const touchStartTime = useRef(0);
+  // Whether the touch started in the valid swipe zone (middle feed area)
+  const swipeAllowed = useRef(false);
+
+  const HEADER_HEIGHT = 54; // px — fixed top bar
+  const BOTTOM_NAV_HEIGHT = 60; // px — fixed bottom nav
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    const y = e.touches[0].clientY;
+    const screenH = window.innerHeight;
+    // Only allow swipe if touch starts in the middle feed area
+    swipeAllowed.current = y > HEADER_HEIGHT && y < screenH - BOTTOM_NAV_HEIGHT;
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = y;
     touchStartTime.current = Date.now();
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!swipeAllowed.current) return;
     if (activeTab === "camera" || activeTab === "dms") return;
     if (storyViewerOpen || searchOpen) return;
+
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
     const deltaTime = Date.now() - touchStartTime.current;
-    if (Math.abs(deltaX) > 60 && deltaTime < 350) {
+
+    // Only fire horizontal swipe if it's clearly more horizontal than vertical
+    if (
+      Math.abs(deltaX) > 60 &&
+      Math.abs(deltaX) > Math.abs(deltaY) * 1.5 &&
+      deltaTime < 350
+    ) {
       if (deltaX > 0) {
         setActiveTab("camera");
       } else {
@@ -650,7 +684,14 @@ export default function HomeFeed() {
             </div>
           ) : activeTab === "profile" ? (
             <main className="flex-1 pb-[60px] overflow-y-auto">
-              <ProfilePage />
+              <ProfilePage
+                displayName={userDisplayName}
+                profilePhoto={userProfilePhoto}
+                onUpdateProfile={(name, photo) => {
+                  setUserDisplayName(name);
+                  if (photo !== undefined) setUserProfilePhoto(photo);
+                }}
+              />
             </main>
           ) : activeTab === "explore" ? (
             <main className="flex-1 pb-[60px] overflow-y-auto">
@@ -729,9 +770,19 @@ export default function HomeFeed() {
                                         : undefined,
                                   }}
                                 >
-                                  <span className="text-[13px] font-bold text-white tracking-tight">
-                                    {story.initials}
-                                  </span>
+                                  {story.isOwn && userProfilePhoto ? (
+                                    <img
+                                      src={userProfilePhoto}
+                                      alt="Your story"
+                                      className="h-full w-full rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-[13px] font-bold text-white tracking-tight">
+                                      {story.isOwn
+                                        ? getInitials(userDisplayName)
+                                        : story.initials}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -1068,7 +1119,19 @@ export default function HomeFeed() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <User className="h-[22px] w-[22px]" />
+              {userProfilePhoto ? (
+                <img
+                  src={userProfilePhoto}
+                  alt="Profile"
+                  className="h-[24px] w-[24px] rounded-full object-cover border border-white/20"
+                />
+              ) : (
+                <div className="h-[24px] w-[24px] rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-600 flex items-center justify-center">
+                  <span className="text-[9px] font-bold text-white">
+                    {getInitials(userDisplayName)}
+                  </span>
+                </div>
+              )}
               <span className="text-[9px] font-medium tracking-wide uppercase">
                 Profile
               </span>
