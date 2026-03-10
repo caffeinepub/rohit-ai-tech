@@ -1,10 +1,12 @@
 import {
   Bell,
   Bookmark,
+  Camera,
   Compass,
   Film,
   Heart,
   Home,
+  ImageIcon,
   MessageCircle,
   MoreHorizontal,
   Plus,
@@ -508,6 +510,12 @@ export default function HomeFeed() {
   // Search modal state
   const [searchOpen, setSearchOpen] = useState(false);
 
+  // Create sheet state
+  const [createSheetOpen, setCreateSheetOpen] = useState(false);
+  const [createType, setCreateType] = useState<"post" | "reel">("post");
+  const [uploadToast, setUploadToast] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Swipe gesture tracking
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
@@ -616,6 +624,140 @@ export default function HomeFeed() {
 
       <AnimatePresence>
         {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} />}
+      </AnimatePresence>
+
+      {/* Hidden file input for gallery upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={() => {
+          setCreateSheetOpen(false);
+          setUploadToast(true);
+          setTimeout(() => setUploadToast(false), 3000);
+        }}
+      />
+
+      {/* Upload success toast */}
+      <AnimatePresence>
+        {uploadToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 60 }}
+            className="fixed bottom-[76px] left-1/2 -translate-x-1/2 z-[200] bg-green-500/90 backdrop-blur-sm text-white text-[13px] font-semibold px-5 py-2.5 rounded-full shadow-lg"
+          >
+            ✓ Uploaded successfully!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Create Bottom Sheet */}
+      <AnimatePresence>
+        {createSheetOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-sm"
+              onClick={() => setCreateSheetOpen(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 400, damping: 40 }}
+              className="fixed bottom-0 left-0 right-0 z-[160] max-w-[480px] mx-auto bg-[#111] border-t border-white/10 rounded-t-[24px] px-5 pt-5 pb-8"
+            >
+              {/* Handle */}
+              <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-5" />
+              <h2 className="text-white font-bold text-[18px] mb-5 text-center">
+                Create New
+              </h2>
+
+              {/* Camera / Gallery buttons */}
+              <div className="flex gap-3 mb-5">
+                <button
+                  type="button"
+                  data-ocid="create.camera.button"
+                  onClick={() => {
+                    setCreateSheetOpen(false);
+                    setActiveTab("camera");
+                  }}
+                  className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors active:scale-95"
+                >
+                  <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Camera className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="text-white text-[13px] font-semibold">
+                    Camera
+                  </span>
+                  <span className="text-white/40 text-[11px]">Record live</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-ocid="create.upload_button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors active:scale-95"
+                >
+                  <div className="h-12 w-12 rounded-full bg-violet-500/20 flex items-center justify-center">
+                    <ImageIcon className="h-6 w-6 text-violet-400" />
+                  </div>
+                  <span className="text-white text-[13px] font-semibold">
+                    Gallery
+                  </span>
+                  <span className="text-white/40 text-[11px]">
+                    Choose from files
+                  </span>
+                </button>
+              </div>
+
+              {/* Post / Reel toggle */}
+              <p className="text-white/50 text-[11px] uppercase tracking-widest font-semibold mb-2 text-center">
+                Type
+              </p>
+              <div className="flex gap-2 mb-5 p-1 bg-white/5 rounded-xl">
+                <button
+                  type="button"
+                  data-ocid="create.post.toggle"
+                  onClick={() => setCreateType("post")}
+                  className={`flex-1 py-2 rounded-[10px] text-[13px] font-semibold transition-all ${
+                    createType === "post"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-white/50 hover:text-white/80"
+                  }`}
+                >
+                  Post
+                </button>
+                <button
+                  type="button"
+                  data-ocid="create.reel.toggle"
+                  onClick={() => setCreateType("reel")}
+                  className={`flex-1 py-2 rounded-[10px] text-[13px] font-semibold transition-all ${
+                    createType === "reel"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-white/50 hover:text-white/80"
+                  }`}
+                >
+                  Reel
+                </button>
+              </div>
+
+              {/* Close button */}
+              <button
+                type="button"
+                data-ocid="create.cancel_button"
+                onClick={() => setCreateSheetOpen(false)}
+                className="w-full py-3 rounded-xl border border-white/10 text-white/50 text-[13px] font-semibold hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          </>
+        )}
       </AnimatePresence>
 
       <div className="w-full max-w-[480px] mx-auto relative min-h-screen flex flex-col">
@@ -1065,17 +1207,11 @@ export default function HomeFeed() {
             <button
               type="button"
               data-ocid="nav.create.tab"
-              onClick={() => setActiveTab("create")}
+              onClick={() => setCreateSheetOpen(true)}
               aria-label="Create post"
               className="flex flex-col items-center px-3 py-1"
             >
-              <div
-                className={`h-10 w-10 rounded-[14px] flex items-center justify-center transition-all shadow-teal ${
-                  activeTab === "create"
-                    ? "bg-primary scale-95"
-                    : "bg-primary/90 hover:bg-primary"
-                }`}
-              >
+              <div className="h-10 w-10 rounded-[14px] flex items-center justify-center transition-all shadow-teal bg-primary/90 hover:bg-primary">
                 <PlusSquare className="h-5 w-5 text-primary-foreground" />
               </div>
             </button>
