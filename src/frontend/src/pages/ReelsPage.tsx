@@ -510,12 +510,12 @@ export default function ReelsPage() {
               item.mediaType === "reel",
           )
           .map((item: Record<string, unknown>, index: number) => ({
-            id: Date.now() + index,
+            id: 900000 + index,
             username: (item.username as string) || "you",
             caption: (item.caption as string) || "",
             song: "Original Audio",
             gradient: "from-[#0a0a0a] via-[#111] to-[#0a0a0a]",
-            accent: "",
+            accent: "linear-gradient(135deg,#6366f1,#ec4899)",
             shimmer: "rgba(255,255,255,0.05)",
             likes: 0,
             comments: 0,
@@ -524,20 +524,20 @@ export default function ReelsPage() {
           }));
         if (userReels.length > 0) {
           setReels((prev) => {
-            const existingUserIds = new Set(
-              prev.filter((r) => r.username === "you").map((r) => r.caption),
-            );
-            const fresh = userReels.filter(
-              (r: Reel) => !existingUserIds.has(r.caption),
-            );
-            return fresh.length > 0 ? [...fresh, ...prev] : prev;
+            // Remove old user reels (id >= 900000), then prepend fresh ones
+            const withoutOld = prev.filter((r) => r.id < 900000);
+            return [...userReels, ...withoutOld];
           });
         }
       } catch {}
     };
     loadUserReels();
     window.addEventListener("userPostAdded", loadUserReels);
-    return () => window.removeEventListener("userPostAdded", loadUserReels);
+    window.addEventListener("storage", loadUserReels);
+    return () => {
+      window.removeEventListener("userPostAdded", loadUserReels);
+      window.removeEventListener("storage", loadUserReels);
+    };
   }, []);
 
   // Sentinel IntersectionObserver for infinite scroll
@@ -1083,13 +1083,51 @@ export default function ReelsPage() {
             </AnimatePresence>
 
             {/* Right vertical action bar */}
-            <div className="absolute right-3 bottom-[80px] z-30 flex flex-col items-center gap-5">
+            <div className="absolute right-3 bottom-[55px] z-30 flex flex-col items-center gap-5">
               <div className="flex flex-col items-center gap-1">
                 <div className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
                   <Eye className="h-[22px] w-[22px] text-white/80" />
                 </div>
                 <span className="text-white text-[11px] font-semibold drop-shadow">
                   {formatCount(reel.views)}
+                </span>
+              </div>
+
+              {/* Add to Story */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  data-ocid="reels.add_to_story_button.1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToStory(reelIndex);
+                  }}
+                  aria-label="Add to Story"
+                  className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
+                >
+                  <PlusCircle className="h-[22px] w-[22px] text-white" />
+                </button>
+                <span className="text-white text-[11px] font-semibold drop-shadow">
+                  Story
+                </span>
+              </div>
+
+              {/* Download */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  data-ocid={`reels.download_button.${reelIndex + 1}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    downloadReel(reel);
+                  }}
+                  aria-label="Download reel"
+                  className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
+                >
+                  <Download className="h-[22px] w-[22px] text-white" />
+                </button>
+                <span className="text-white text-[11px] font-semibold drop-shadow">
+                  Save
                 </span>
               </div>
 
@@ -1143,44 +1181,6 @@ export default function ReelsPage() {
                 </span>
               </div>
 
-              {/* Add to Story */}
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  type="button"
-                  data-ocid="reels.add_to_story_button.1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddToStory(reelIndex);
-                  }}
-                  aria-label="Add to Story"
-                  className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
-                >
-                  <PlusCircle className="h-[22px] w-[22px] text-white" />
-                </button>
-                <span className="text-white text-[11px] font-semibold drop-shadow">
-                  Story
-                </span>
-              </div>
-
-              {/* Download */}
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  type="button"
-                  data-ocid={`reels.download_button.${reelIndex + 1}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    downloadReel(reel);
-                  }}
-                  aria-label="Download reel"
-                  className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
-                >
-                  <Download className="h-[22px] w-[22px] text-white" />
-                </button>
-                <span className="text-white text-[11px] font-semibold drop-shadow">
-                  Save
-                </span>
-              </div>
-
               {/* Share */}
               <div className="flex flex-col items-center gap-1">
                 <button
@@ -1210,6 +1210,43 @@ export default function ReelsPage() {
               >
                 <div className="h-3 w-3 rounded-full bg-white/80" />
               </div>
+            </div>
+
+            {/* Creator profile + Follow */}
+            <div className="absolute bottom-[140px] left-3 z-30 flex items-center gap-2 pointer-events-auto">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.dispatchEvent(
+                    new CustomEvent("navigateToProfile", {
+                      detail: { username: reel.username },
+                    }),
+                  );
+                }}
+                className="h-10 w-10 rounded-full border-2 border-white overflow-hidden flex-shrink-0 active:scale-95 transition-transform"
+                aria-label={`View ${reel.username}'s profile`}
+              >
+                <div
+                  className="h-full w-full flex items-center justify-center text-white font-bold text-[14px]"
+                  style={{
+                    background:
+                      reel.accent || "linear-gradient(135deg,#6366f1,#ec4899)",
+                  }}
+                >
+                  {reel.username.charAt(0).toUpperCase()}
+                </div>
+              </button>
+              <span className="text-white font-semibold text-[13px] drop-shadow">
+                @{reel.username}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="px-3 py-1 rounded-full bg-white text-black font-semibold text-[12px] active:scale-95 transition-transform"
+              >
+                Follow
+              </button>
             </div>
 
             {/* Bottom info bar */}
