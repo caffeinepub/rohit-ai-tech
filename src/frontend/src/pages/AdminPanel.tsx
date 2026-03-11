@@ -216,6 +216,9 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
     toggleVerified,
     blockedUsers,
     toggleBlocked,
+    adminAdRevenue,
+    adminAdImpressions,
+    resetAdRevenue,
   } = useAdmin();
 
   const [announcementDraft, setAnnouncementDraft] =
@@ -584,6 +587,90 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
             </h2>
           </div>
           <WithdrawalRequestsList />
+        </motion.section>
+
+        {/* Section 6: Ad Revenue Dashboard */}
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.25 }}
+          data-ocid="admin.ad_revenue.section"
+          className="rounded-2xl overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(135deg, oklch(0.14 0.06 140 / 0.6), oklch(0.12 0.04 160 / 0.5))",
+            border: "1px solid oklch(0.55 0.2 140 / 0.25)",
+          }}
+        >
+          <div className="px-4 py-3 border-b border-white/[0.07] flex items-center gap-2">
+            <span className="text-[16px]">💰</span>
+            <h2 className="text-[13px] font-bold uppercase tracking-widest text-white/50">
+              Admin Ad Revenue
+            </h2>
+          </div>
+          <div className="px-4 py-5 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div
+                className="rounded-xl px-4 py-3 text-center"
+                style={{
+                  background: "oklch(0.18 0.08 140 / 0.5)",
+                  border: "1px solid oklch(0.55 0.2 140 / 0.2)",
+                }}
+              >
+                <p className="text-[11px] text-white/45 uppercase tracking-wider mb-1">
+                  Total Earned
+                </p>
+                <p
+                  className="text-[24px] font-black"
+                  style={{ color: "oklch(0.82 0.22 140)" }}
+                >
+                  ₹{adminAdRevenue.toFixed(2)}
+                </p>
+              </div>
+              <div
+                className="rounded-xl px-4 py-3 text-center"
+                style={{
+                  background: "oklch(0.18 0.08 140 / 0.5)",
+                  border: "1px solid oklch(0.55 0.2 140 / 0.2)",
+                }}
+              >
+                <p className="text-[11px] text-white/45 uppercase tracking-wider mb-1">
+                  Ad Impressions
+                </p>
+                <p
+                  className="text-[24px] font-black"
+                  style={{ color: "oklch(0.82 0.22 140)" }}
+                >
+                  {adminAdImpressions.toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div
+              className="rounded-xl px-4 py-3"
+              style={{
+                background: "oklch(0.14 0.04 140 / 0.4)",
+                border: "1px solid oklch(0.55 0.2 140 / 0.15)",
+              }}
+            >
+              <p className="text-[12px] text-white/50 leading-relaxed">
+                💡 Interstitial ads appear every{" "}
+                <strong className="text-white/70">3 Reels</strong>. 100% of ad
+                revenue goes directly to your Admin Wallet. User rewards are
+                currently <strong className="text-white/70">disabled</strong>.
+              </p>
+            </div>
+            <button
+              type="button"
+              data-ocid="admin.ad_revenue.delete_button"
+              onClick={() => {
+                resetAdRevenue();
+                toast.success("Ad revenue counter reset.");
+              }}
+              className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-red-400/80 border border-red-500/20 bg-red-500/5 active:scale-[0.98] transition-transform"
+            >
+              Reset Revenue Counter
+            </button>
+          </div>
         </motion.section>
 
         {/* Footer */}

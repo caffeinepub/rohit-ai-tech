@@ -11,8 +11,9 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SiInstagram, SiWhatsapp } from "react-icons/si";
+import { useAdmin } from "../contexts/AdminContext";
 import { useModeration } from "../contexts/ModerationContext";
 
 const REELS = [
@@ -88,6 +89,61 @@ const REELS = [
   },
 ];
 
+// High-paying Interstitial Ads — revenue goes 100% to Admin Wallet
+const INTERSTITIAL_ADS = [
+  {
+    id: "int1",
+    brand: "Samsung Galaxy",
+    tagline: "Galaxy AI is here. The most powerful phone ever made.",
+    cta: "Explore Now",
+    emoji: "📱",
+    revenue: 8.5,
+    bg: "linear-gradient(160deg, #0a0a14 0%, #0d0d2e 50%, #050510 100%)",
+    accent:
+      "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(30,80,220,0.45) 0%, transparent 70%)",
+    ctaStyle: { background: "linear-gradient(135deg, #1428A0, #2563EB)" },
+  },
+  {
+    id: "int2",
+    brand: "Swiggy Instamart",
+    tagline: "Groceries in 10 minutes. No excuses.",
+    cta: "Order Now",
+    emoji: "🛒",
+    revenue: 6.0,
+    bg: "linear-gradient(160deg, #0f0800 0%, #1e0e00 50%, #0a0500 100%)",
+    accent:
+      "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(220,100,10,0.45) 0%, transparent 70%)",
+    ctaStyle: { background: "linear-gradient(135deg, #FC8019, #e55a00)" },
+  },
+  {
+    id: "int3",
+    brand: "Byju's",
+    tagline: "Learn anything. Anytime. Anywhere. Free trial today.",
+    cta: "Start Free",
+    emoji: "🎓",
+    revenue: 7.5,
+    bg: "linear-gradient(160deg, #00080a 0%, #001020 50%, #000810 100%)",
+    accent:
+      "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(10,140,220,0.45) 0%, transparent 70%)",
+    ctaStyle: { background: "linear-gradient(135deg, #0078C8, #00A3FF)" },
+  },
+  {
+    id: "int4",
+    brand: "MakeMyTrip",
+    tagline: "Flights at ₹999. Book before they're gone.",
+    cta: "Book Now",
+    emoji: "✈️",
+    revenue: 9.0,
+    bg: "linear-gradient(160deg, #060012 0%, #0d0025 50%, #06000f 100%)",
+    accent:
+      "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(180,40,220,0.4) 0%, transparent 70%)",
+    ctaStyle: { background: "linear-gradient(135deg, #C4006A, #E0006A)" },
+  },
+];
+
+const REELS_BEFORE_AD = 3; // show interstitial after every 3 reels
+const SKIP_DELAY_MS = 5000; // 5s before skip button appears
+
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -103,11 +159,25 @@ export default function ReelsPage() {
   const [shareSheetIndex, setShareSheetIndex] = useState<number | null>(null);
   const [storyToastIndex, setStoryToastIndex] = useState<number | null>(null);
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
+  const [_currentFeedIndex, setCurrentFeedIndex] = useState(0);
+
+  // Interstitial ad state
+  const [interstitialAd, setInterstitialAd] = useState<
+    (typeof INTERSTITIAL_ADS)[0] | null
+  >(null);
+  const [canSkip, setCanSkip] = useState(false);
+  const [skipCountdown, setSkipCountdown] = useState(5);
+  const adIndexRef = useRef(0);
+  const reelsViewedSinceAdRef = useRef(0);
+  const watchedIndicesRef = useRef<Set<number>>(new Set());
+
   const playIconTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const storyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastCounterRef = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { getChannelStatus, getDeletionReason, getDeletionLabel } =
     useModeration();
+  const { recordAdImpression } = useAdmin();
 
   const showToast = useCallback((text: string) => {
     const id = ++toastCounterRef.current;
@@ -116,6 +186,74 @@ export default function ReelsPage() {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 2800);
   }, []);
+
+  // Track scroll to detect new reel entering view
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const items = container.querySelectorAll<HTMLElement>("[data-feed-index]");
+    if (!items.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            const idx = Number.parseInt(
+              (entry.target as HTMLElement).dataset.feedIndex || "0",
+              10,
+            );
+            setCurrentFeedIndex(idx);
+            // Track unique reel views and trigger interstitial
+            if (!watchedIndicesRef.current.has(idx)) {
+              watchedIndicesRef.current.add(idx);
+              reelsViewedSinceAdRef.current += 1;
+              if (reelsViewedSinceAdRef.current >= REELS_BEFORE_AD) {
+                reelsViewedSinceAdRef.current = 0;
+                const ad =
+                  INTERSTITIAL_ADS[
+                    adIndexRef.current % INTERSTITIAL_ADS.length
+                  ];
+                adIndexRef.current += 1;
+                setInterstitialAd(ad);
+                setCanSkip(false);
+                setSkipCountdown(Math.ceil(SKIP_DELAY_MS / 1000));
+              }
+            }
+          }
+        }
+      },
+      { threshold: 0.5 },
+    );
+
+    for (const el of items) {
+      observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  // Skip countdown timer when interstitial is showing
+  useEffect(() => {
+    if (!interstitialAd) return;
+    const interval = setInterval(() => {
+      setSkipCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setCanSkip(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [interstitialAd]);
+
+  const closeInterstitial = useCallback(() => {
+    if (interstitialAd) {
+      recordAdImpression(interstitialAd.revenue);
+    }
+    setInterstitialAd(null);
+    setCanSkip(false);
+  }, [interstitialAd, recordAdImpression]);
 
   const toggleLike = useCallback((id: number) => {
     setLikedReels((prev) => {
@@ -126,30 +264,26 @@ export default function ReelsPage() {
     });
   }, []);
 
-  const handleReelTap = useCallback(
-    (index: number) => {
-      if (shareSheetIndex !== null) return;
-      setPlayingIndex((prev) => (prev === index ? null : index));
-      setShowPlayIcon(index);
-      if (playIconTimerRef.current) clearTimeout(playIconTimerRef.current);
-      playIconTimerRef.current = setTimeout(() => setShowPlayIcon(null), 800);
-    },
-    [shareSheetIndex],
+  const handleReelTap = useCallback((index: number) => {
+    setPlayingIndex((prev) => (prev === index ? null : index));
+    setShowPlayIcon(index);
+    if (playIconTimerRef.current) clearTimeout(playIconTimerRef.current);
+    playIconTimerRef.current = setTimeout(() => setShowPlayIcon(null), 800);
+  }, []);
+
+  const openShareSheet = useCallback(
+    (index: number) => setShareSheetIndex(index),
+    [],
   );
-
-  const openShareSheet = useCallback((index: number) => {
-    setShareSheetIndex(index);
-  }, []);
-
-  const closeShareSheet = useCallback(() => {
-    setShareSheetIndex(null);
-  }, []);
+  const closeShareSheet = useCallback(() => setShareSheetIndex(null), []);
 
   const handleCopyLink = useCallback(
     (reel: (typeof REELS)[0]) => {
-      const url = `https://rohitaitech.app/reel/${reel.id}`;
-      navigator.clipboard.writeText(url).catch(() => {});
-      showToast("🔗 Link copied!");
+      const url = `https://rohit-ai-tech.app/reel/${reel.id}`;
+      navigator.clipboard
+        .writeText(url)
+        .then(() => showToast("Link copied!"))
+        .catch(() => showToast("Copy failed"));
       closeShareSheet();
     },
     [showToast, closeShareSheet],
@@ -157,37 +291,30 @@ export default function ReelsPage() {
 
   const handleShareWhatsApp = useCallback(
     (reel: (typeof REELS)[0]) => {
-      const url = `https://rohitaitech.app/reel/${reel.id}`;
-      const text = encodeURIComponent(
+      const url = `https://rohit-ai-tech.app/reel/${reel.id}`;
+      const msg = encodeURIComponent(
         `${reel.caption}\n\nWatch on Rohit AI Tech: ${url}`,
       );
-      window.open(`https://wa.me/?text=${text}`, "_blank");
+      window.open(`https://wa.me/?text=${msg}`, "_blank");
       closeShareSheet();
     },
     [closeShareSheet],
   );
 
   const handleShareInstagram = useCallback(() => {
-    showToast("📸 Opening Instagram...");
+    showToast("Opening Instagram…");
     closeShareSheet();
   }, [showToast, closeShareSheet]);
 
   const handleMoreOptions = useCallback(
-    async (reel: (typeof REELS)[0]) => {
-      const url = `https://rohitaitech.app/reel/${reel.id}`;
+    (reel: (typeof REELS)[0]) => {
+      const url = `https://rohit-ai-tech.app/reel/${reel.id}`;
       if (navigator.share) {
-        try {
-          await navigator.share({
-            title: "Rohit AI Tech",
-            text: reel.caption,
-            url,
-          });
-        } catch {
-          // user cancelled or error
-        }
+        navigator
+          .share({ title: "Rohit AI Tech", text: reel.caption, url })
+          .catch(() => {});
       } else {
-        navigator.clipboard.writeText(url).catch(() => {});
-        showToast("📋 Copied to clipboard");
+        showToast("Sharing not supported on this device");
       }
       closeShareSheet();
     },
@@ -197,13 +324,13 @@ export default function ReelsPage() {
   const handleAddToStory = useCallback((index: number) => {
     setStoryToastIndex(index);
     if (storyTimerRef.current) clearTimeout(storyTimerRef.current);
-    storyTimerRef.current = setTimeout(() => setStoryToastIndex(null), 2200);
+    storyTimerRef.current = setTimeout(() => setStoryToastIndex(null), 2500);
   }, []);
 
   const downloadReel = useCallback((reel: (typeof REELS)[0]) => {
     const canvas = document.createElement("canvas");
-    canvas.width = 1080;
-    canvas.height = 1920;
+    canvas.width = 720;
+    canvas.height = 1280;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -212,31 +339,25 @@ export default function ReelsPage() {
       "#2d1b69",
       "#0a001f",
     ];
-    const colors =
-      hexMatches.length >= 2 ? hexMatches : [hexMatches[0], hexMatches[0]];
+    const colors = hexMatches.slice(0, 3);
 
-    const grad = ctx.createLinearGradient(
-      0,
-      0,
-      canvas.width * 0.7,
-      canvas.height,
-    );
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     grad.addColorStop(0, colors[0]);
-    if (colors.length >= 3) {
+    if (colors[1]) {
       grad.addColorStop(0.5, colors[1]);
-      grad.addColorStop(1, colors[2]);
+      grad.addColorStop(1, colors[2] || colors[1]);
     } else {
-      grad.addColorStop(1, colors[1]);
+      grad.addColorStop(1, colors[0]);
     }
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const radGrad = ctx.createRadialGradient(
-      canvas.width * 0.6,
-      canvas.height * 0.4,
+      canvas.width * 0.5,
+      canvas.height * 0.35,
       0,
-      canvas.width * 0.6,
-      canvas.height * 0.4,
+      canvas.width * 0.5,
+      canvas.height * 0.35,
       canvas.width * 0.6,
     );
     radGrad.addColorStop(0, "rgba(255,255,255,0.10)");
@@ -246,7 +367,7 @@ export default function ReelsPage() {
 
     const botGrad = ctx.createLinearGradient(
       0,
-      canvas.height * 0.6,
+      canvas.height * 0.55,
       0,
       canvas.height,
     );
@@ -255,41 +376,33 @@ export default function ReelsPage() {
     ctx.fillStyle = botGrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 52px sans-serif";
-    ctx.fillText(`@${reel.username}`, 60, canvas.height - 220);
-
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.font = "44px sans-serif";
-    const maxW = canvas.width - 120;
-    let captionY = canvas.height - 150;
-    const words = reel.caption.split(" ");
-    let line = "";
-    for (const word of words) {
-      const test = `${line + word} `;
-      if (ctx.measureText(test).width > maxW && line) {
-        ctx.fillText(line.trim(), 60, captionY);
-        captionY += 60;
-        line = `${word} `;
-      } else {
-        line = test;
-      }
-    }
-    if (line.trim()) ctx.fillText(line.trim(), 60, captionY);
-
     ctx.save();
-    ctx.globalAlpha = 0.35;
+    ctx.globalAlpha = 0.22;
+    ctx.font = "italic bold 26px 'Arial', sans-serif";
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold italic 52px sans-serif";
-    ctx.fillText("✦ Rohit AI Tech", 50, 100);
+    ctx.letterSpacing = "0.18em";
+    ctx.fillText("✦ ROHIT AI TECH", 32, 64);
+    ctx.globalAlpha = 0.18;
+    ctx.fillText("✦ ROHIT AI TECH", canvas.width - 280, canvas.height - 48);
     ctx.restore();
 
     ctx.save();
-    ctx.globalAlpha = 0.35;
+    ctx.globalAlpha = 0.92;
+    ctx.font = "bold 48px 'Arial', sans-serif";
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold italic 46px sans-serif";
-    ctx.textAlign = "right";
-    ctx.fillText("✦ Rohit AI Tech", canvas.width - 50, canvas.height - 60);
+    ctx.textAlign = "center";
+    ctx.fillText("▶", canvas.width / 2, canvas.height / 2);
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.font = "bold 28px 'Arial', sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "left";
+    ctx.fillText(`@${reel.username}`, 32, canvas.height - 120);
+    ctx.font = "18px 'Arial', sans-serif";
+    ctx.globalAlpha = 0.7;
+    ctx.fillText(reel.caption.slice(0, 55), 32, canvas.height - 84);
     ctx.restore();
 
     const link = document.createElement("a");
@@ -300,6 +413,7 @@ export default function ReelsPage() {
 
   return (
     <div
+      ref={scrollContainerRef}
       className="h-full w-full overflow-y-scroll snap-y snap-mandatory bg-black"
       style={
         {
@@ -308,9 +422,139 @@ export default function ReelsPage() {
         } as React.CSSProperties
       }
     >
-      {REELS.map((reel, index) => {
+      {/* ── INTERSTITIAL AD OVERLAY ── */}
+      <AnimatePresence>
+        {interstitialAd && (
+          <motion.div
+            key="interstitial"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            data-ocid="reels.interstitial_ad.modal"
+            className="fixed inset-0 z-[200] flex flex-col"
+            style={{ background: interstitialAd.bg }}
+          >
+            {/* Accent glow */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: interstitialAd.accent }}
+            />
+
+            {/* Top bar */}
+            <div className="relative z-10 flex items-center justify-between px-5 pt-12 pb-3">
+              <span
+                className="text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1 rounded-full"
+                style={{
+                  background: "rgba(255,255,255,0.10)",
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  color: "rgba(255,255,255,0.55)",
+                }}
+              >
+                Ad · Rohit AI Tech
+              </span>
+              {/* Skip / countdown button */}
+              {canSkip ? (
+                <button
+                  type="button"
+                  data-ocid="reels.interstitial_ad.close_button"
+                  onClick={closeInterstitial}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-semibold text-[13px] active:scale-95 transition-transform"
+                  style={{
+                    background: "rgba(255,255,255,0.18)",
+                    border: "1px solid rgba(255,255,255,0.3)",
+                  }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Skip Ad
+                </button>
+              ) : (
+                <span
+                  className="px-4 py-1.5 rounded-full text-white/50 font-semibold text-[13px]"
+                  style={{
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                  }}
+                >
+                  Skip in {skipCountdown}s
+                </span>
+              )}
+            </div>
+
+            {/* Main content */}
+            <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 text-center">
+              <motion.div
+                initial={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 320,
+                  damping: 20,
+                  delay: 0.1,
+                }}
+                className="text-8xl mb-8"
+              >
+                {interstitialAd.emoji}
+              </motion.div>
+              <motion.h1
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.18 }}
+                className="text-[32px] font-black mb-3 text-white"
+                style={{
+                  letterSpacing: "-0.025em",
+                  fontFamily: "'Bricolage Grotesque', 'Outfit', sans-serif",
+                }}
+              >
+                {interstitialAd.brand}
+              </motion.h1>
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.24 }}
+                className="text-[16px] text-white/65 leading-relaxed mb-10 max-w-[280px]"
+              >
+                {interstitialAd.tagline}
+              </motion.p>
+              <motion.button
+                type="button"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                onClick={(e) => e.stopPropagation()}
+                className="px-10 py-4 rounded-full font-bold text-[16px] text-white active:scale-95 transition-transform shadow-2xl"
+                style={interstitialAd.ctaStyle as React.CSSProperties}
+              >
+                {interstitialAd.cta}
+              </motion.button>
+            </div>
+
+            {/* Progress bar at bottom */}
+            <div className="relative z-10 px-6 pb-12">
+              <div className="h-[3px] w-full rounded-full bg-white/10 overflow-hidden">
+                <motion.div
+                  className="h-full bg-white/40 rounded-full"
+                  initial={{ width: "0%" }}
+                  animate={{
+                    width: canSkip
+                      ? "100%"
+                      : `${((5 - skipCountdown) / 5) * 100}%`,
+                  }}
+                  transition={{ duration: 0.9, ease: "linear" }}
+                />
+              </div>
+              <p className="text-center text-white/30 text-[11px] mt-2">
+                Full-screen advertisement
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {REELS.map((reel, reelIndex) => {
+        const feedIndex = reelIndex;
         const liked = likedReels.has(reel.id);
-        const isPlaying = playingIndex === index;
+        const isPlaying = playingIndex === reelIndex;
         const likeCount = liked ? reel.likes + 1 : reel.likes;
         const channelStatus = getChannelStatus(reel.username);
         const deletionReason = getDeletionReason(reel.username);
@@ -318,12 +562,14 @@ export default function ReelsPage() {
         const badgeColor = isCopyrightViolation
           ? "bg-orange-500/20 border-orange-500/40 text-orange-300"
           : "bg-red-500/20 border-red-500/40 text-red-300";
-        const isShareOpen = shareSheetIndex === index;
-        const isStoryToast = storyToastIndex === index;
+        const isShareOpen = shareSheetIndex === reelIndex;
+        const isStoryToast = storyToastIndex === reelIndex;
+        // currentFeedIndex tracked for future use
 
         return (
           <div
             key={reel.id}
+            data-feed-index={feedIndex}
             className="h-full w-full snap-start snap-always relative flex-shrink-0 overflow-hidden"
             style={{ minHeight: "100%" }}
           >
@@ -340,7 +586,9 @@ export default function ReelsPage() {
 
             {/* Pulsing shimmer */}
             <div
-              className={`absolute inset-0 transition-opacity duration-700 ${isPlaying ? "opacity-100" : "opacity-0"}`}
+              className={`absolute inset-0 transition-opacity duration-700 ${
+                isPlaying ? "opacity-100" : "opacity-0"
+              }`}
               style={{
                 background: `radial-gradient(ellipse 50% 40% at 50% 50%, ${reel.shimmer} 0%, transparent 70%)`,
                 animation: isPlaying
@@ -396,12 +644,12 @@ export default function ReelsPage() {
               type="button"
               aria-label={isPlaying ? "Pause" : "Play"}
               className="absolute inset-0 z-10"
-              onClick={() => handleReelTap(index)}
+              onClick={() => handleReelTap(reelIndex)}
             />
 
             {/* Play/Pause flash icon */}
             <AnimatePresence>
-              {showPlayIcon === index && (
+              {showPlayIcon === reelIndex && (
                 <motion.div
                   key="playicon"
                   initial={{ opacity: 0, scale: 0.6 }}
@@ -453,7 +701,7 @@ export default function ReelsPage() {
               <div className="flex flex-col items-center gap-1">
                 <button
                   type="button"
-                  data-ocid={`reels.like_button.${index + 1}`}
+                  data-ocid={`reels.like_button.${reelIndex + 1}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleLike(reel.id);
@@ -472,7 +720,9 @@ export default function ReelsPage() {
                     }}
                   >
                     <Heart
-                      className={`h-6 w-6 transition-colors duration-150 ${liked ? "fill-red-500 text-red-500" : "text-white"}`}
+                      className={`h-6 w-6 transition-colors duration-150 ${
+                        liked ? "fill-red-500 text-red-500" : "text-white"
+                      }`}
                     />
                   </motion.div>
                 </button>
@@ -485,7 +735,7 @@ export default function ReelsPage() {
               <div className="flex flex-col items-center gap-1">
                 <button
                   type="button"
-                  data-ocid={`reels.comment_button.${index + 1}`}
+                  data-ocid={`reels.comment_button.${reelIndex + 1}`}
                   onClick={(e) => e.stopPropagation()}
                   aria-label="Comment"
                   className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
@@ -504,7 +754,7 @@ export default function ReelsPage() {
                   data-ocid="reels.add_to_story_button.1"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleAddToStory(index);
+                    handleAddToStory(reelIndex);
                   }}
                   aria-label="Add to Story"
                   className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
@@ -520,7 +770,7 @@ export default function ReelsPage() {
               <div className="flex flex-col items-center gap-1">
                 <button
                   type="button"
-                  data-ocid={`reels.download_button.${index + 1}`}
+                  data-ocid={`reels.download_button.${reelIndex + 1}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     downloadReel(reel);
@@ -539,10 +789,10 @@ export default function ReelsPage() {
               <div className="flex flex-col items-center gap-1">
                 <button
                   type="button"
-                  data-ocid={`reels.share_button.${index + 1}`}
+                  data-ocid={`reels.share_button.${reelIndex + 1}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    openShareSheet(index);
+                    openShareSheet(reelIndex);
                   }}
                   aria-label="Share"
                   className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
@@ -625,7 +875,7 @@ export default function ReelsPage() {
             {/* Suspended / Deleted overlay */}
             {(channelStatus === "suspended" || channelStatus === "deleted") && (
               <div
-                data-ocid={`reels.panel.${index + 1}`}
+                data-ocid={`reels.panel.${reelIndex + 1}`}
                 className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-sm"
               >
                 <div className="text-center px-8">
@@ -816,7 +1066,7 @@ export default function ReelsPage() {
                         className="flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-white/[0.06] hover:bg-white/10 active:bg-white/15 transition-colors"
                       >
                         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center flex-shrink-0">
-                          <Share2 className="h-[18px] w-[18px] text-white" />
+                          <Share2 className="h-[18px] w-[22px] text-white" />
                         </div>
                         <div className="text-left">
                           <p className="text-white font-semibold text-[14px]">

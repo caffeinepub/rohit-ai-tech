@@ -27,6 +27,7 @@ import { motion } from "motion/react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAdmin } from "../contexts/AdminContext";
+import { useWatchEarn } from "../contexts/WatchEarnContext";
 
 type ProfileTab = "posts" | "reels" | "tagged";
 
@@ -152,6 +153,7 @@ export default function ProfilePage({
   onOpenAdmin,
 }: ProfilePageProps) {
   const { monetizationTargets } = useAdmin();
+  const { coinBalance } = useWatchEarn();
   const [activeTab, setActiveTab] = useState<ProfileTab>("posts");
   const [editOpen, setEditOpen] = useState(false);
 
@@ -594,8 +596,42 @@ export default function ProfilePage({
                     WebkitTextFillColor: "transparent",
                   }}
                 >
-                  ₹ 0.00
+                  ₹ {coinBalance.toFixed(2)}
                 </p>
+                {/* Watch Earnings */}
+                {coinBalance > 0 && (
+                  <div
+                    data-ocid="wallet.watch_earnings"
+                    className="flex items-center gap-1.5 mt-1.5 px-3 py-1 rounded-full"
+                    style={{
+                      background: "oklch(0.72 0.18 55 / 0.12)",
+                      border: "1px solid oklch(0.72 0.18 55 / 0.3)",
+                    }}
+                  >
+                    <span className="text-[12px]">🪙</span>
+                    <span
+                      className="text-[11px] font-semibold"
+                      style={{ color: "oklch(0.85 0.18 70)" }}
+                    >
+                      Watch Earnings: ₹{coinBalance.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {coinBalance === 0 && (
+                  <div
+                    data-ocid="wallet.watch_earnings"
+                    className="flex items-center gap-1.5 mt-1.5 px-3 py-1 rounded-full"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                    }}
+                  >
+                    <span className="text-[11px]">🪙</span>
+                    <span className="text-[11px] text-muted-foreground/50">
+                      Watch Reels to earn coins
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Tabs */}

@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useState } from "react";
 import { AdminProvider } from "./contexts/AdminContext";
 import { ModerationProvider } from "./contexts/ModerationContext";
+import { WatchEarnProvider } from "./contexts/WatchEarnContext";
 import AdminPanel from "./pages/AdminPanel";
 import HomeFeed from "./pages/HomeFeed";
 import WelcomeScreen from "./pages/WelcomeScreen";
@@ -15,13 +16,15 @@ export default function App() {
   return (
     <AdminProvider>
       <ModerationProvider>
-        {showAdmin ? (
-          <AdminPanel onBack={() => setShowAdmin(false)} />
-        ) : page === "feed" ? (
-          <HomeFeed onOpenAdmin={() => setShowAdmin(true)} />
-        ) : (
-          <WelcomeScreen onGetStarted={() => setPage("feed")} />
-        )}
+        <WatchEarnProvider>
+          {showAdmin ? (
+            <AdminPanel onBack={() => setShowAdmin(false)} />
+          ) : page === "feed" ? (
+            <HomeFeed onOpenAdmin={() => setShowAdmin(true)} />
+          ) : (
+            <WelcomeScreen onGetStarted={() => setPage("feed")} />
+          )}
+        </WatchEarnProvider>
       </ModerationProvider>
       <Toaster />
     </AdminProvider>
