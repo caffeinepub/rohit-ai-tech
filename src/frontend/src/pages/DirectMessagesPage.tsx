@@ -266,7 +266,15 @@ function ChatThread({
   convo: Conversation;
   onBack: () => void;
 }) {
-  const [messages, setMessages] = useState<Message[]>(convo.messages);
+  const storageKey = `rohit_dm_messages_${convo.username}`;
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : convo.messages;
+    } catch {
+      return convo.messages;
+    }
+  });
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -282,10 +290,14 @@ function ChatThread({
       hour: "2-digit",
       minute: "2-digit",
     });
-    setMessages((prev) => [
-      ...prev,
-      { id: prev.length + 1, text, sent: true, time: timeStr },
-    ]);
+    setMessages((prev) => {
+      const updated = [
+        ...prev,
+        { id: prev.length + 1, text, sent: true, time: timeStr },
+      ];
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+      return updated;
+    });
     setInput("");
     setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,10 +9,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  AlertCircle,
   Camera,
   CheckCircle2,
+  Clock,
   Grid3x3,
   Lock,
   Play,
@@ -21,6 +25,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { useAdmin } from "../contexts/AdminContext";
 
 type ProfileTab = "posts" | "reels" | "tagged";
@@ -124,6 +129,15 @@ function formatNumber(n: number): string {
   return n.toString();
 }
 
+interface WithdrawalRequest {
+  id: number;
+  amount: number;
+  bankDetails: { accountNo: string; ifsc: string; bankName: string };
+  status: "pending" | "approved" | "rejected";
+  timestamp: string;
+  userName: string;
+}
+
 interface ProfilePageProps {
   displayName: string;
   profilePhoto: string | null;
@@ -163,12 +177,36 @@ export default function ProfilePage({
   const [draftUsername, setDraftUsername] = useState(username);
   const [draftBio, setDraftBio] = useState(bio);
 
-  // Wallet state
-  const [bankOpen, setBankOpen] = useState(false);
-  const [accountNumber, setAccountNumber] = useState("");
-  const [ifscCode, setIfscCode] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [savedBank, setSavedBank] = useState(false);
+  // Wallet state - localStorage backed
+  const loadBankDetails = () => {
+    try {
+      const saved = localStorage.getItem("rohit_bank_details");
+      return saved
+        ? JSON.parse(saved)
+        : { accountNumber: "", ifscCode: "", bankName: "" };
+    } catch {
+      return { accountNumber: "", ifscCode: "", bankName: "" };
+    }
+  };
+  const initBank = loadBankDetails();
+  const [accountNumber, setAccountNumber] = useState<string>(
+    initBank.accountNumber,
+  );
+  const [ifscCode, setIfscCode] = useState<string>(initBank.ifscCode);
+  const [bankName, setBankName] = useState<string>(initBank.bankName);
+  const [savedBank, setSavedBank] = useState<boolean>(!!initBank.accountNumber);
+  const [walletTab, setWalletTab] = useState("bank");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawRequests, setWithdrawRequests] = useState<WithdrawalRequest[]>(
+    () => {
+      try {
+        const saved = localStorage.getItem("rohit_withdrawal_requests");
+        return saved ? JSON.parse(saved) : [];
+      } catch {
+        return [];
+      }
+    },
+  );
 
   const openEdit = () => {
     setDraftName(displayName);
@@ -193,8 +231,44 @@ export default function ProfilePage({
   };
 
   const handleBankSave = () => {
+    if (!accountNumber.trim() || !ifscCode.trim() || !bankName.trim()) {
+      toast.error("Please fill all bank details");
+      return;
+    }
+    const details = {
+      accountNumber: accountNumber.trim(),
+      ifscCode: ifscCode.trim(),
+      bankName: bankName.trim(),
+    };
+    localStorage.setItem("rohit_bank_details", JSON.stringify(details));
     setSavedBank(true);
-    setBankOpen(false);
+    toast.success("Bank details saved ✓");
+  };
+
+  const handleWithdraw = () => {
+    if (!savedBank) {
+      toast.error("Please add bank details first");
+      setWalletTab("bank");
+      return;
+    }
+    const amount = Number.parseFloat(withdrawAmount);
+    if (!amount || amount < 100) {
+      toast.error("Minimum withdrawal is ₹100");
+      return;
+    }
+    const req: WithdrawalRequest = {
+      id: Date.now(),
+      amount,
+      bankDetails: { accountNo: accountNumber, ifsc: ifscCode, bankName },
+      status: "pending",
+      timestamp: new Date().toISOString(),
+      userName: "Rohit Mehra",
+    };
+    const updated = [...withdrawRequests, req];
+    setWithdrawRequests(updated);
+    localStorage.setItem("rohit_withdrawal_requests", JSON.stringify(updated));
+    setWithdrawAmount("");
+    toast.success("Payout request submitted! ✓");
   };
 
   // Creator Dashboard data
@@ -474,7 +548,7 @@ export default function ProfilePage({
           </div>
         </motion.div>
 
-        {/* ── Wallet Card ── */}
+        {/* ── Wallet Section ── */}
         <motion.div
           data-ocid="profile.wallet.section"
           initial={{ opacity: 0, y: 10 }}
@@ -490,36 +564,29 @@ export default function ProfilePage({
             }}
           >
             <div className="rounded-2xl bg-[oklch(0.10_0.01_270)] p-4 space-y-3">
-              {/* Title */}
+              {/* Title + Badge */}
               <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[15px]">💰</span>
-                    <h2 className="text-[14px] font-bold text-foreground">
-                      Wallet
-                    </h2>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground/60 pl-6">
-                    Earnings &amp; Payouts
-                  </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[15px]">💰</span>
+                  <h2 className="text-[14px] font-bold text-foreground">
+                    Wallet
+                  </h2>
                 </div>
                 {savedBank && (
-                  <div className="flex items-center gap-1 bg-emerald-500/15 border border-emerald-500/30 rounded-full px-2.5 py-1">
-                    <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                    <span className="text-[10px] font-bold text-emerald-400">
-                      Bank Linked
-                    </span>
-                  </div>
+                  <Badge className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    <CheckCircle2 className="h-2.5 w-2.5 mr-1" />
+                    Bank Linked
+                  </Badge>
                 )}
               </div>
 
               {/* Balance */}
-              <div className="flex flex-col items-center py-3">
+              <div className="flex flex-col items-center py-2">
                 <p className="text-[11px] text-muted-foreground/50 mb-1">
                   Available Balance
                 </p>
                 <p
-                  className="text-[32px] font-black tracking-tight"
+                  className="text-[30px] font-black tracking-tight"
                   style={{
                     background:
                       "linear-gradient(135deg, oklch(0.85 0.18 70), oklch(0.75 0.22 55))",
@@ -531,15 +598,215 @@ export default function ProfilePage({
                 </p>
               </div>
 
-              {/* Add Bank Details button */}
-              <button
-                type="button"
-                data-ocid="wallet.open_modal_button"
-                onClick={() => setBankOpen(true)}
-                className="w-full py-2.5 rounded-xl border border-amber-500/30 text-[13px] font-semibold text-amber-400/90 bg-amber-500/[0.06] hover:bg-amber-500/[0.12] active:scale-[0.98] transition-all"
-              >
-                {savedBank ? "Edit Bank Details" : "Add Bank Details"}
-              </button>
+              {/* Tabs */}
+              <Tabs value={walletTab} onValueChange={setWalletTab}>
+                <TabsList className="w-full bg-white/[0.06] rounded-xl h-9">
+                  <TabsTrigger
+                    data-ocid="wallet.bank.tab"
+                    value="bank"
+                    className="flex-1 text-[12px] data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-300 rounded-lg"
+                  >
+                    Bank
+                  </TabsTrigger>
+                  <TabsTrigger
+                    data-ocid="wallet.withdraw.tab"
+                    value="withdraw"
+                    className="flex-1 text-[12px] data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-300 rounded-lg"
+                  >
+                    Withdraw
+                  </TabsTrigger>
+                  <TabsTrigger
+                    data-ocid="wallet.history.tab"
+                    value="history"
+                    className="flex-1 text-[12px] data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-300 rounded-lg"
+                  >
+                    History
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Tab 1: Bank Details */}
+                <TabsContent value="bank" className="mt-3 space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] text-muted-foreground font-medium">
+                      Account Number
+                    </Label>
+                    <input
+                      data-ocid="wallet.account_number.input"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      className="w-full bg-white/[0.06] border border-white/10 text-foreground text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-amber-500/50 placeholder:text-white/20"
+                      placeholder="Enter account number"
+                      inputMode="numeric"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] text-muted-foreground font-medium">
+                      IFSC Code
+                    </Label>
+                    <input
+                      data-ocid="wallet.ifsc.input"
+                      value={ifscCode}
+                      onChange={(e) =>
+                        setIfscCode(e.target.value.toUpperCase())
+                      }
+                      className="w-full bg-white/[0.06] border border-white/10 text-foreground text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-amber-500/50 placeholder:text-white/20 uppercase"
+                      placeholder="e.g. SBIN0001234"
+                      maxLength={11}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] text-muted-foreground font-medium">
+                      Bank Name
+                    </Label>
+                    <input
+                      data-ocid="wallet.bank_name.input"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      className="w-full bg-white/[0.06] border border-white/10 text-foreground text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-amber-500/50 placeholder:text-white/20"
+                      placeholder="e.g. State Bank of India"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    data-ocid="wallet.save_button"
+                    onClick={handleBankSave}
+                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 rounded-xl hover:opacity-90 text-[13px] font-semibold h-9"
+                  >
+                    {savedBank ? "Update Bank Details" : "Save Bank Details"}
+                  </Button>
+                </TabsContent>
+
+                {/* Tab 2: Withdraw */}
+                <TabsContent value="withdraw" className="mt-3">
+                  {!monetizeActive ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
+                        <Lock className="h-4 w-4 text-amber-400 shrink-0" />
+                        <p className="text-[12px] text-amber-300/80">
+                          Unlock withdrawals by hitting 20K followers &amp; 10M
+                          views
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <div>
+                          <div className="flex justify-between text-[11px] text-muted-foreground/60 mb-1">
+                            <span>Followers</span>
+                            <span>
+                              {formatNumber(followersCount)} /{" "}
+                              {formatNumber(followersGoal)}
+                            </span>
+                          </div>
+                          <Progress
+                            value={followersProgress}
+                            className="h-1.5 bg-white/10"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-[11px] text-muted-foreground/60 mb-1">
+                            <span>Views</span>
+                            <span>
+                              {formatNumber(viewsCount)} /{" "}
+                              {formatNumber(viewsGoal)}
+                            </span>
+                          </div>
+                          <Progress
+                            value={viewsProgress}
+                            className="h-1.5 bg-white/10"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {!savedBank && (
+                        <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                          <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+                          <p className="text-[12px] text-red-300/80">
+                            Add bank details in the Bank tab first
+                          </p>
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] text-muted-foreground font-medium">
+                          Amount (₹)
+                        </Label>
+                        <input
+                          data-ocid="wallet.withdraw_amount.input"
+                          type="number"
+                          value={withdrawAmount}
+                          onChange={(e) => setWithdrawAmount(e.target.value)}
+                          className="w-full bg-white/[0.06] border border-white/10 text-foreground text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-amber-500/50 placeholder:text-white/20"
+                          placeholder="Min ₹100"
+                          min={100}
+                          inputMode="numeric"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        data-ocid="wallet.withdraw.primary_button"
+                        onClick={handleWithdraw}
+                        disabled={!savedBank}
+                        className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-0 rounded-xl hover:opacity-90 text-[13px] font-semibold h-9 disabled:opacity-40"
+                      >
+                        Request Payout
+                      </Button>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Tab 3: History */}
+                <TabsContent value="history" className="mt-3">
+                  {withdrawRequests.length === 0 ? (
+                    <div
+                      data-ocid="wallet.history.empty_state"
+                      className="flex flex-col items-center gap-2 py-4 text-center"
+                    >
+                      <Clock className="h-8 w-8 text-white/20" />
+                      <p className="text-[12px] text-muted-foreground/50">
+                        No withdrawal requests yet
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {withdrawRequests.map((req, idx) => (
+                        <div
+                          key={req.id}
+                          data-ocid={`wallet.history.item.${idx + 1}`}
+                          className="flex items-center justify-between bg-white/[0.04] border border-white/[0.07] rounded-xl p-3"
+                        >
+                          <div>
+                            <p className="text-[13px] font-bold text-foreground">
+                              ₹{req.amount.toLocaleString()}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground/50">
+                              {new Date(req.timestamp).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}
+                            </p>
+                          </div>
+                          <Badge
+                            className={`text-[10px] font-bold rounded-full px-2 py-0.5 border ${
+                              req.status === "approved"
+                                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                                : req.status === "rejected"
+                                  ? "bg-red-500/15 border-red-500/30 text-red-400"
+                                  : "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                            }`}
+                          >
+                            {req.status.charAt(0).toUpperCase() +
+                              req.status.slice(1)}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </motion.div>
@@ -685,88 +952,6 @@ export default function ProfilePage({
                 className="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white border-0 rounded-xl hover:opacity-90"
               >
                 Save Changes
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* ── Bank Details Sheet ── */}
-      <Sheet open={bankOpen} onOpenChange={setBankOpen}>
-        <SheetContent
-          data-ocid="wallet.sheet"
-          side="bottom"
-          className="bg-[oklch(0.11_0.01_270)] border-t border-white/10 rounded-t-2xl px-5 py-6"
-        >
-          <SheetHeader className="mb-5">
-            <SheetTitle className="text-foreground text-[16px] font-bold">
-              Bank Details
-            </SheetTitle>
-          </SheetHeader>
-
-          <div className="space-y-4">
-            {/* Account Number */}
-            <div className="space-y-1.5">
-              <Label className="text-[12px] text-muted-foreground font-medium">
-                Account Number
-              </Label>
-              <Input
-                data-ocid="wallet.account_number.input"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                className="bg-white/[0.06] border-white/10 text-foreground focus:ring-amber-500/50 rounded-xl"
-                placeholder="Enter account number"
-                inputMode="numeric"
-              />
-            </div>
-
-            {/* IFSC Code */}
-            <div className="space-y-1.5">
-              <Label className="text-[12px] text-muted-foreground font-medium">
-                IFSC Code
-              </Label>
-              <Input
-                data-ocid="wallet.ifsc.input"
-                value={ifscCode}
-                onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-                className="bg-white/[0.06] border-white/10 text-foreground focus:ring-amber-500/50 rounded-xl uppercase"
-                placeholder="e.g. SBIN0001234"
-                maxLength={11}
-              />
-            </div>
-
-            {/* Bank Name */}
-            <div className="space-y-1.5">
-              <Label className="text-[12px] text-muted-foreground font-medium">
-                Bank Name
-              </Label>
-              <Input
-                data-ocid="wallet.bank_name.input"
-                value={bankName}
-                onChange={(e) => setBankName(e.target.value)}
-                className="bg-white/[0.06] border-white/10 text-foreground focus:ring-amber-500/50 rounded-xl"
-                placeholder="e.g. State Bank of India"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-1">
-              <Button
-                type="button"
-                data-ocid="wallet.cancel_button"
-                variant="outline"
-                onClick={() => setBankOpen(false)}
-                className="flex-1 border-white/15 bg-white/[0.04] text-foreground/80 hover:bg-white/[0.08] rounded-xl"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                data-ocid="wallet.save_button"
-                onClick={handleBankSave}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 rounded-xl hover:opacity-90"
-              >
-                Save Details
               </Button>
             </div>
           </div>

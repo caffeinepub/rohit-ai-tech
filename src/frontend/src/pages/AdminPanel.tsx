@@ -8,16 +8,19 @@ import {
   Bell,
   BookOpen,
   Camera,
+  CheckCircle2,
   ChevronLeft,
+  Clock,
   Compass,
   DollarSign,
   Film,
   MessageCircle,
   Settings2,
   Shield,
+  XCircle,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { type FeatureFlags, useAdmin } from "../contexts/AdminContext";
 
@@ -80,6 +83,123 @@ function getInitials(name: string) {
 
 interface AdminPanelProps {
   onBack: () => void;
+}
+
+interface WithdrawalRequest {
+  id: number;
+  amount: number;
+  bankDetails: { accountNo: string; ifsc: string; bankName: string };
+  status: "pending" | "approved" | "rejected";
+  timestamp: string;
+  userName: string;
+}
+
+function WithdrawalRequestsList() {
+  const [requests, setRequests] = useState<WithdrawalRequest[]>([]);
+
+  useEffect(() => {
+    const load = () => {
+      try {
+        const saved = localStorage.getItem("rohit_withdrawal_requests");
+        setRequests(saved ? JSON.parse(saved) : []);
+      } catch {
+        setRequests([]);
+      }
+    };
+    load();
+    window.addEventListener("storage", load);
+    return () => window.removeEventListener("storage", load);
+  }, []);
+
+  const updateStatus = (id: number, status: "approved" | "rejected") => {
+    const updated = requests.map((r) => (r.id === id ? { ...r, status } : r));
+    setRequests(updated);
+    localStorage.setItem("rohit_withdrawal_requests", JSON.stringify(updated));
+    toast.success(
+      status === "approved" ? "Payment approved ✓" : "Payment rejected",
+    );
+  };
+
+  if (requests.length === 0) {
+    return (
+      <div
+        data-ocid="admin.withdrawals.empty_state"
+        className="px-4 py-8 flex flex-col items-center gap-2 text-center"
+      >
+        <Clock className="h-8 w-8 text-white/20" />
+        <p className="text-[13px] text-white/30">No withdrawal requests yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-white/[0.05]">
+      {requests.map((req, idx) => (
+        <div
+          key={req.id}
+          data-ocid={`admin.withdrawals.item.${idx + 1}`}
+          className="px-4 py-3.5 space-y-2"
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[14px] font-bold text-white">
+                  ₹{req.amount.toLocaleString()}
+                </span>
+                <span
+                  className={`text-[10px] font-bold rounded-full px-2 py-0.5 border ${
+                    req.status === "approved"
+                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                      : req.status === "rejected"
+                        ? "bg-red-500/15 border-red-500/30 text-red-400"
+                        : "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                  }`}
+                >
+                  {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
+                </span>
+              </div>
+              <p className="text-[11px] text-white/50 mt-0.5">{req.userName}</p>
+              <p className="text-[11px] text-white/40">
+                {req.bankDetails.bankName} · ···
+                {req.bankDetails.accountNo.slice(-4)} · {req.bankDetails.ifsc}
+              </p>
+              <p className="text-[10px] text-white/30">
+                {new Date(req.timestamp).toLocaleString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+          </div>
+          {req.status === "pending" && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                data-ocid={`admin.withdrawals.confirm_button.${idx + 1}`}
+                onClick={() => updateStatus(req.id, "approved")}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 transition-colors active:scale-95"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Approve
+              </button>
+              <button
+                type="button"
+                data-ocid={`admin.withdrawals.delete_button.${idx + 1}`}
+                onClick={() => updateStatus(req.id, "rejected")}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25 transition-colors active:scale-95"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                Reject
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function AdminPanel({ onBack }: AdminPanelProps) {
@@ -448,6 +568,22 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
               );
             })}
           </div>
+        </motion.section>
+
+        {/* Section 5: Withdrawal Requests */}
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.2 }}
+          data-ocid="admin.withdrawals.section"
+          className="rounded-2xl bg-white/[0.04] border border-white/[0.07] overflow-hidden"
+        >
+          <div className="px-4 py-3 border-b border-white/[0.07]">
+            <h2 className="text-[13px] font-bold uppercase tracking-widest text-white/50">
+              Withdrawal Requests
+            </h2>
+          </div>
+          <WithdrawalRequestsList />
         </motion.section>
 
         {/* Footer */}
