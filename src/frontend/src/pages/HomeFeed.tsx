@@ -19,9 +19,11 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAdmin } from "../contexts/AdminContext";
+import { getQualityScore } from "../utils/monetizationEngine";
 import CameraPage from "./CameraPage";
 import DirectMessagesPage from "./DirectMessagesPage";
 import ExplorePage from "./ExplorePage";
+import LiveStreamPage from "./LiveStreamPage";
 import NotificationsPage from "./NotificationsPage";
 import ProfilePage from "./ProfilePage";
 import ReelsPage from "./ReelsPage";
@@ -87,7 +89,8 @@ const STORIES = [
 
 const OTHER_STORIES = STORIES.filter((s) => !s.isOwn);
 
-const POSTS = [
+// Quality-scored posts (sorted by engagement / age)
+const RAW_POSTS = [
   {
     id: 1,
     username: "priya.sharma",
@@ -165,6 +168,20 @@ const POSTS = [
   },
 ];
 
+const POST_AGE_HOURS = [0.5, 0.3, 1, 3, 6];
+const POSTS = [...RAW_POSTS]
+  .map((p, i) => ({
+    ...p,
+    shares: Math.floor(p.likes * 0.05),
+    ageHours: POST_AGE_HOURS[i],
+  }))
+  .sort((a, b) => {
+    const sa = getQualityScore(a.likes, a.comments, a.shares, a.ageHours);
+    const sb = getQualityScore(b.likes, b.comments, b.shares, b.ageHours);
+    return sb - sa;
+  });
+const TOP_POST_ID = POSTS[0]?.id;
+
 function formatCount(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   return String(n);
@@ -178,7 +195,8 @@ type NavTab =
   | "notifications"
   | "profile"
   | "camera"
-  | "dms";
+  | "dms"
+  | "live";
 
 // ── Story Viewer ──────────────────────────────────────────────────────────────
 const STORY_DURATION = 5000; // ms per story
@@ -489,6 +507,9 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
   const { featureFlags, pinnedAnnouncement } = useAdmin();
   const [announcementDismissed, setAnnouncementDismissed] = useState(false);
   const [activeTab, setActiveTab] = useState<NavTab>("home");
+  const [liveStreamMode, setLiveStreamMode] = useState<
+    "broadcaster" | "viewer"
+  >("broadcaster");
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [savedPosts, setSavedPosts] = useState<Set<number>>(new Set());
   const [viewedStories, setViewedStories] = useState<Set<number>>(new Set());
@@ -512,6 +533,15 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
 
   // Search modal state
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // User-uploaded posts from localStorage
+  const [userPosts, setUserPosts] = useState<typeof POSTS>(() => {
+    try {
+      const raw = localStorage.getItem("user_posts");
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return [];
+  });
 
   // Create sheet state
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
@@ -581,7 +611,6 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
   };
 
   const handleStoryTap = (storyId: number) => {
-    if (storyId === 0) return;
     const idx = OTHER_STORIES.findIndex((s) => s.id === storyId);
     if (idx === -1) return;
     setActiveStoryIndex(idx);
@@ -597,7 +626,8 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
     setStoryViewerOpen(false);
   };
 
-  const isFullscreenOverlay = activeTab === "camera" || activeTab === "dms";
+  const isFullscreenOverlay =
+    activeTab === "camera" || activeTab === "dms" || activeTab === "live";
 
   return (
     <div
@@ -611,6 +641,13 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
       )}
       {activeTab === "dms" && (
         <DirectMessagesPage onClose={() => setActiveTab("home")} />
+      )}
+      {activeTab === "live" && (
+        <LiveStreamPage
+          mode={liveStreamMode}
+          onClose={() => setActiveTab("home")}
+          streamerName="Rohit AI Tech"
+        />
       )}
 
       {/* Story viewer + Search modal (portal-like, cover full screen) */}
@@ -635,7 +672,37 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
         type="file"
         accept="image/*,video/*"
         className="hidden"
-        onChange={() => {
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            const newPost = {
+              id: Date.now(),
+              username: "you",
+              displayName: "You",
+              initials: "ME",
+              avatarGradient: "from-cyan-400 via-teal-500 to-emerald-600",
+              timestamp: "Just now",
+              caption:
+                createType === "reel"
+                  ? "New Reel u{1F3AC}"
+                  : "New Post u{1F4F8}",
+              imageGradient: "from-[#001a2c] via-[#003366] to-[#001f3f]",
+              imageAccent:
+                "radial-gradient(ellipse 80% 50% at 50% 50%, oklch(0.65 0.18 220 / 0.5) 0%, transparent 70%)",
+              likes: 0,
+              comments: 0,
+              shares: 0,
+              ageHours: 0,
+            };
+            setUserPosts((prev) => {
+              const updated = [newPost, ...prev];
+              try {
+                localStorage.setItem("user_posts", JSON.stringify(updated));
+                window.dispatchEvent(new CustomEvent("userPostAdded"));
+              } catch {}
+              return updated;
+            });
+          }
           setCreateSheetOpen(false);
           setUploadToast(true);
           setTimeout(() => setUploadToast(false), 3000);
@@ -824,7 +891,10 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
         {/* ── Main Content ── */}
         {!isFullscreenOverlay &&
           (activeTab === "reels" ? (
-            <div className="fixed inset-0 z-30 pb-[60px]">
+            <div
+              className="fixed inset-x-0 top-0 z-30"
+              style={{ height: "calc(100svh - 60px)" }}
+            >
               <ReelsPage />
             </div>
           ) : activeTab === "profile" ? (
@@ -837,6 +907,10 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
                   if (photo !== undefined) setUserProfilePhoto(photo);
                 }}
                 onOpenAdmin={onOpenAdmin}
+                onGoLive={() => {
+                  setLiveStreamMode("broadcaster");
+                  setActiveTab("live");
+                }}
               />
             </main>
           ) : activeTab === "explore" ? (
@@ -895,7 +969,17 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
                               ? "stories.add_button"
                               : `stories.item.${index}`
                           }
-                          onClick={() => handleStoryTap(story.id)}
+                          onClick={() => {
+                            if (
+                              story.id === 6 &&
+                              featureFlags.liveStreamingEnabled
+                            ) {
+                              setLiveStreamMode("viewer");
+                              setActiveTab("live");
+                            } else {
+                              handleStoryTap(story.id);
+                            }
+                          }}
                           initial={{ opacity: 0, scale: 0.85 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{
@@ -914,11 +998,13 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
                           <div className="relative">
                             <div
                               className={`p-[2.5px] rounded-full transition-all duration-300 ${
-                                story.isOwn
-                                  ? `bg-gradient-to-tr ${story.avatarGradient}`
-                                  : isViewed
-                                    ? "bg-white/20"
-                                    : `bg-gradient-to-tr ${story.avatarGradient}`
+                                story.id === 6
+                                  ? "bg-red-600 animate-pulse"
+                                  : story.isOwn
+                                    ? `bg-gradient-to-tr ${story.avatarGradient}`
+                                    : isViewed
+                                      ? "bg-white/20"
+                                      : `bg-gradient-to-tr ${story.avatarGradient}`
                               }`}
                               style={{
                                 filter:
@@ -986,7 +1072,7 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
 
               {/* ── Feed Posts ── */}
               <div data-ocid="feed.list">
-                {POSTS.map((post, index) => {
+                {[...userPosts, ...POSTS].map((post, index) => {
                   const liked = likedPosts.has(post.id);
                   const saved = savedPosts.has(post.id);
                   const likeCount = liked ? post.likes + 1 : post.likes;
@@ -1055,6 +1141,29 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
                           }}
                         />
                         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/30 to-transparent" />
+                        {/* 🔥 Trending Badge */}
+                        {post.id === TOP_POST_ID && (
+                          <div
+                            className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full"
+                            style={{
+                              background:
+                                "linear-gradient(135deg, rgba(251,146,60,0.92), rgba(234,88,12,0.92))",
+                              border: "1px solid rgba(251,146,60,0.5)",
+                              backdropFilter: "blur(8px)",
+                            }}
+                          >
+                            <span style={{ fontSize: "11px" }}>🔥</span>
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                fontWeight: 800,
+                                color: "#fff",
+                              }}
+                            >
+                              Trending
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Action bar */}

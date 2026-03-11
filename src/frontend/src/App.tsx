@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { useEffect, useState } from "react";
 import { AdminProvider } from "./contexts/AdminContext";
+import { AntiFraudProvider } from "./contexts/AntiFraudContext";
 import { ModerationProvider } from "./contexts/ModerationContext";
 import { WatchEarnProvider } from "./contexts/WatchEarnContext";
 import AdminPanel from "./pages/AdminPanel";
@@ -9,16 +10,47 @@ import WelcomeScreen from "./pages/WelcomeScreen";
 
 type Page = "splash" | "welcome" | "feed";
 
+export interface SessionData {
+  loggedIn: boolean;
+  name: string;
+  email: string;
+  loginMethod: string;
+}
+
+export const SESSION_KEY = "rohit_session";
+
+export function saveSession(data: SessionData) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+}
+
+export function getSession(): SessionData | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.loggedIn === true) return parsed as SessionData;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
   const [page, setPage] = useState<Page>("splash");
   const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setPage("welcome");
+      const session = getSession();
+      setPage(session ? "feed" : "welcome");
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleLogin = (data: SessionData) => {
+    saveSession(data);
+    setPage("feed");
+  };
 
   if (page === "splash") {
     return (
@@ -34,7 +66,6 @@ export default function App() {
           zIndex: 9999,
         }}
       >
-        {/* Glow orbs */}
         <div
           style={{
             position: "absolute",
@@ -63,8 +94,6 @@ export default function App() {
             pointerEvents: "none",
           }}
         />
-
-        {/* Logo icon */}
         <img
           src="/assets/generated/rohit-ai-tech-icon.dim_512x512.png"
           alt="Rohit AI Tech"
@@ -78,8 +107,6 @@ export default function App() {
             animation: "splashPop 0.6s ease-out",
           }}
         />
-
-        {/* App name */}
         <div
           style={{
             fontSize: 30,
@@ -93,8 +120,6 @@ export default function App() {
         >
           ROHIT AI TECH
         </div>
-
-        {/* Subtitle */}
         <div
           style={{
             fontSize: 14,
@@ -108,7 +133,6 @@ export default function App() {
         >
           Powered by AI
         </div>
-
         <style>{`
           @keyframes pulse {
             0%, 100% { opacity: 0.6; transform: scale(1); }
@@ -129,17 +153,19 @@ export default function App() {
 
   return (
     <AdminProvider>
-      <ModerationProvider>
-        <WatchEarnProvider>
-          {showAdmin ? (
-            <AdminPanel onBack={() => setShowAdmin(false)} />
-          ) : page === "feed" ? (
-            <HomeFeed onOpenAdmin={() => setShowAdmin(true)} />
-          ) : (
-            <WelcomeScreen onGetStarted={() => setPage("feed")} />
-          )}
-        </WatchEarnProvider>
-      </ModerationProvider>
+      <AntiFraudProvider>
+        <ModerationProvider>
+          <WatchEarnProvider>
+            {showAdmin ? (
+              <AdminPanel onBack={() => setShowAdmin(false)} />
+            ) : page === "feed" ? (
+              <HomeFeed onOpenAdmin={() => setShowAdmin(true)} />
+            ) : (
+              <WelcomeScreen onGetStarted={handleLogin} />
+            )}
+          </WatchEarnProvider>
+        </ModerationProvider>
+      </AntiFraudProvider>
       <Toaster />
     </AdminProvider>
   );

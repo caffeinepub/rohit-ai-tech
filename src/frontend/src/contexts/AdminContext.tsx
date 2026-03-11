@@ -9,10 +9,28 @@ export interface FeatureFlags {
   monetization: boolean;
   camera: boolean;
   contentModeration: boolean;
+  liveStreamingEnabled: boolean;
 }
 
 const AD_REVENUE_KEY = "rohit_admin_ad_revenue";
 const AD_IMPRESSION_KEY = "rohit_admin_ad_impressions";
+const ADMIN_EXTRA_KEY = "rohit_admin_extra";
+
+export interface UserReport {
+  id: string;
+  reportedUser: string;
+  reportedBy: string;
+  reason: string;
+  timestamp: string;
+  resolved: boolean;
+}
+
+interface AdminExtraStore {
+  verifiedUsers: string[];
+  blockedUserIds: string[];
+  reports: UserReport[];
+  totalViewRevenue: number;
+}
 
 interface AdminContextValue {
   featureFlags: FeatureFlags;
@@ -23,14 +41,30 @@ interface AdminContextValue {
   setThemeColor: (color: string) => void;
   monetizationTargets: { followers: number; views: number };
   setMonetizationTargets: (t: { followers: number; views: number }) => void;
+  // Legacy sets (kept for backward compat)
   verifiedUsers: Set<string>;
   toggleVerified: (userId: string) => void;
   blockedUsers: Set<string>;
   toggleBlocked: (userId: string) => void;
+  // Ad revenue
   adminAdRevenue: number;
   adminAdImpressions: number;
   recordAdImpression: (amount: number) => void;
   resetAdRevenue: () => void;
+  // New: verified/blocked as arrays + reports + view revenue
+  verifiedUsersList: string[];
+  blockedUserIds: string[];
+  reports: UserReport[];
+  totalViewRevenue: number;
+  verifyUser: (username: string) => void;
+  unverifyUser: (username: string) => void;
+  addViewRevenue: (amount: number) => void;
+  submitReport: (
+    reportedUser: string,
+    reason: string,
+    reportedBy?: string,
+  ) => void;
+  resolveReport: (id: string) => void;
 }
 
 const AdminContext = createContext<AdminContextValue | null>(null);
@@ -45,6 +79,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     monetization: true,
     camera: true,
     contentModeration: true,
+    liveStreamingEnabled: true,
   });
 
   const [pinnedAnnouncement, setPinnedAnnouncement] = useState("");
@@ -65,10 +100,30 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     return saved ? Number.parseInt(saved, 10) : 0;
   });
 
+  // Extra admin store
+  const [extraStore, setExtraStore] = useState<AdminExtraStore>(() => {
+    try {
+      const raw = localStorage.getItem(ADMIN_EXTRA_KEY);
+      if (raw) return JSON.parse(raw) as AdminExtraStore;
+    } catch {
+      /* ignore */
+    }
+    return {
+      verifiedUsers: [],
+      blockedUserIds: [],
+      reports: [],
+      totalViewRevenue: 0,
+    };
+  });
+
   useEffect(() => {
     localStorage.setItem(AD_REVENUE_KEY, adminAdRevenue.toFixed(2));
     localStorage.setItem(AD_IMPRESSION_KEY, String(adminAdImpressions));
   }, [adminAdRevenue, adminAdImpressions]);
+
+  useEffect(() => {
+    localStorage.setItem(ADMIN_EXTRA_KEY, JSON.stringify(extraStore));
+  }, [extraStore]);
 
   const recordAdImpression = (amount: number) => {
     setAdminAdRevenue((prev) => Number.parseFloat((prev + amount).toFixed(2)));
@@ -104,6 +159,54 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const verifyUser = (username: string) => {
+    setExtraStore((prev) => ({
+      ...prev,
+      verifiedUsers: [...new Set([...prev.verifiedUsers, username])],
+    }));
+  };
+
+  const unverifyUser = (username: string) => {
+    setExtraStore((prev) => ({
+      ...prev,
+      verifiedUsers: prev.verifiedUsers.filter((u) => u !== username),
+    }));
+  };
+
+  const addViewRevenue = (amount: number) => {
+    setExtraStore((prev) => ({
+      ...prev,
+      totalViewRevenue: Number.parseFloat(
+        (prev.totalViewRevenue + amount).toFixed(2),
+      ),
+    }));
+  };
+
+  const submitReport = (
+    reportedUser: string,
+    reason: string,
+    reportedBy = "user",
+  ) => {
+    const report: UserReport = {
+      id: `rpt_${Date.now()}`,
+      reportedUser,
+      reportedBy,
+      reason,
+      timestamp: new Date().toISOString(),
+      resolved: false,
+    };
+    setExtraStore((prev) => ({ ...prev, reports: [report, ...prev.reports] }));
+  };
+
+  const resolveReport = (id: string) => {
+    setExtraStore((prev) => ({
+      ...prev,
+      reports: prev.reports.map((r) =>
+        r.id === id ? { ...r, resolved: true } : r,
+      ),
+    }));
+  };
+
   useEffect(() => {
     document.documentElement.style.setProperty("--admin-accent", themeColor);
   }, [themeColor]);
@@ -127,6 +230,15 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         adminAdImpressions,
         recordAdImpression,
         resetAdRevenue,
+        verifiedUsersList: extraStore.verifiedUsers,
+        blockedUserIds: extraStore.blockedUserIds,
+        reports: extraStore.reports,
+        totalViewRevenue: extraStore.totalViewRevenue,
+        verifyUser,
+        unverifyUser,
+        addViewRevenue,
+        submitReport,
+        resolveReport,
       }}
     >
       {children}

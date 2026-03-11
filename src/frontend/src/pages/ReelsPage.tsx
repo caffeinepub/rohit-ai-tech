@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SiInstagram, SiWhatsapp } from "react-icons/si";
 import { useAdmin } from "../contexts/AdminContext";
 import { useModeration } from "../contexts/ModerationContext";
+import { getQualityScore } from "../utils/monetizationEngine";
 
 const BASE_REELS = [
   {
@@ -345,6 +346,25 @@ const BASE_REELS = [
   },
 ];
 
+// Assign mock ageHours for quality scoring
+const REEL_AGE_HOURS = [
+  2, 5, 12, 24, 3, 48, 8, 6, 36, 72, 4, 18, 10, 14, 96, 7, 20, 30, 48, 9, 15,
+  25,
+];
+
+const SORTED_REELS = [...BASE_REELS]
+  .map((r, i) => ({
+    ...r,
+    ageHours: REEL_AGE_HOURS[i % REEL_AGE_HOURS.length],
+  }))
+  .sort((a, b) => {
+    const scoreA = getQualityScore(a.likes, a.comments, a.shares, a.ageHours);
+    const scoreB = getQualityScore(b.likes, b.comments, b.shares, b.ageHours);
+    return scoreB - scoreA;
+  });
+
+const TOP_REEL_IDS = new Set(SORTED_REELS.slice(0, 3).map((r) => r.id));
+
 let reelIdCounter = BASE_REELS.length + 1;
 
 function shuffleReels<T>(arr: T[]): T[] {
@@ -428,7 +448,8 @@ export default function ReelsPage() {
     if (stored !== today) {
       localStorage.setItem("reels_shuffle_date", today);
     }
-    return shuffleReels(BASE_REELS);
+    const shuffled = shuffleReels(SORTED_REELS);
+    return shuffled.length > 0 ? shuffled : [...SORTED_REELS];
   });
 
   const [likedReels, setLikedReels] = useState<Set<number>>(new Set());
@@ -469,9 +490,54 @@ export default function ReelsPage() {
   // Append more reels for infinite scroll
   const appendMoreReels = useCallback(() => {
     const count = 8 + Math.floor(Math.random() * 3); // 8-10
-    const shuffled = shuffleReels(BASE_REELS).slice(0, count);
+    const shuffled = shuffleReels(SORTED_REELS).slice(0, count);
     const newReels = shuffled.map((r) => ({ ...r, id: reelIdCounter++ }));
     setReels((prev) => [...prev, ...newReels]);
+  }, []);
+
+  // Load user-uploaded reels from localStorage
+  useEffect(() => {
+    const loadUserReels = () => {
+      try {
+        const raw = localStorage.getItem("user_posts");
+        if (!raw) return;
+        const posts = JSON.parse(raw);
+        const userReels = posts
+          .filter(
+            (item: Record<string, unknown>) =>
+              item.type === "reel" ||
+              item.type === "video" ||
+              item.mediaType === "reel",
+          )
+          .map((item: Record<string, unknown>, index: number) => ({
+            id: Date.now() + index,
+            username: (item.username as string) || "you",
+            caption: (item.caption as string) || "",
+            song: "Original Audio",
+            gradient: "from-[#0a0a0a] via-[#111] to-[#0a0a0a]",
+            accent: "",
+            shimmer: "rgba(255,255,255,0.05)",
+            likes: 0,
+            comments: 0,
+            shares: 0,
+            views: (item.views as number) || 0,
+          }));
+        if (userReels.length > 0) {
+          setReels((prev) => {
+            const existingUserIds = new Set(
+              prev.filter((r) => r.username === "you").map((r) => r.caption),
+            );
+            const fresh = userReels.filter(
+              (r: Reel) => !existingUserIds.has(r.caption),
+            );
+            return fresh.length > 0 ? [...fresh, ...prev] : prev;
+          });
+        }
+      } catch {}
+    };
+    loadUserReels();
+    window.addEventListener("userPostAdded", loadUserReels);
+    return () => window.removeEventListener("userPostAdded", loadUserReels);
   }, []);
 
   // Sentinel IntersectionObserver for infinite scroll
@@ -722,6 +788,7 @@ export default function ReelsPage() {
       className="h-full w-full overflow-y-scroll snap-y snap-mandatory bg-black"
       style={
         {
+          height: "calc(100svh - 60px)",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
         } as React.CSSProperties
@@ -874,8 +941,8 @@ export default function ReelsPage() {
           <div
             key={reel.id}
             data-feed-index={feedIndex}
-            className="h-full w-full snap-start snap-always relative flex-shrink-0 overflow-hidden"
-            style={{ minHeight: "100%" }}
+            className="h-full w-full snap-start snap-always relative overflow-hidden"
+            style={{ height: "calc(100svh - 60px)", flexShrink: 0 }}
           >
             {/* Gradient background */}
             <div
@@ -921,6 +988,31 @@ export default function ReelsPage() {
                 backgroundSize: "128px 128px",
               }}
             />
+
+            {/* 🔥 Trending Badge */}
+            {TOP_REEL_IDS.has(reel.id) && (
+              <div
+                className="absolute top-[72px] left-4 z-20 flex items-center gap-1 px-2.5 py-1 rounded-full"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(251,146,60,0.9), rgba(234,88,12,0.9))",
+                  border: "1px solid rgba(251,146,60,0.5)",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                <span style={{ fontSize: "11px" }}>🔥</span>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 800,
+                    color: "#fff",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  TRENDING
+                </span>
+              </div>
+            )}
 
             {/* ── STYLISH ON-SCREEN WATERMARK ── */}
             <div
@@ -991,7 +1083,7 @@ export default function ReelsPage() {
             </AnimatePresence>
 
             {/* Right vertical action bar */}
-            <div className="absolute right-3 bottom-[120px] z-30 flex flex-col items-center gap-5">
+            <div className="absolute right-3 bottom-[80px] z-30 flex flex-col items-center gap-5">
               <div className="flex flex-col items-center gap-1">
                 <div className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
                   <Eye className="h-[22px] w-[22px] text-white/80" />
@@ -1128,6 +1220,9 @@ export default function ReelsPage() {
                   <p className="text-white font-bold text-[15px] leading-tight drop-shadow">
                     @{reel.username}
                   </p>
+                  <span className="text-white/60 text-[11px] font-medium">
+                    👁 {formatCount(reel.views)} views
+                  </span>
                   {channelStatus === "deleted" && deletionReason && (
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold ${badgeColor}`}

@@ -1,8 +1,21 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -18,16 +31,22 @@ import {
   Clock,
   Grid3x3,
   Lock,
+  LogOut,
   Play,
   Settings2,
   Shield,
   Tag,
 } from "lucide-react";
+import { BadgeCheck, Flag } from "lucide-react";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAdmin } from "../contexts/AdminContext";
 import { useWatchEarn } from "../contexts/WatchEarnContext";
+import {
+  calculateEarnings,
+  getNextPayoutDate,
+} from "../utils/monetizationEngine";
 
 type ProfileTab = "posts" | "reels" | "tagged";
 
@@ -144,6 +163,7 @@ interface ProfilePageProps {
   profilePhoto: string | null;
   onUpdateProfile: (name: string, photo?: string) => void;
   onOpenAdmin: () => void;
+  onGoLive?: () => void;
 }
 
 export default function ProfilePage({
@@ -151,8 +171,10 @@ export default function ProfilePage({
   profilePhoto,
   onUpdateProfile,
   onOpenAdmin,
+  onGoLive,
 }: ProfilePageProps) {
-  const { monetizationTargets } = useAdmin();
+  const { monetizationTargets, verifiedUsersList, submitReport, featureFlags } =
+    useAdmin();
   const { coinBalance } = useWatchEarn();
   const [activeTab, setActiveTab] = useState<ProfileTab>("posts");
   const [editOpen, setEditOpen] = useState(false);
@@ -164,6 +186,8 @@ export default function ProfilePage({
     "Building the future with AI ✨ | Tech Creator | Innovator",
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
 
   const getInitials = (name: string) =>
     name
@@ -352,12 +376,26 @@ export default function ProfilePage({
           <h1 className="text-[18px] font-bold text-foreground leading-tight tracking-tight">
             {displayName}
           </h1>
-          <p className="text-[13px] text-muted-foreground font-medium">
-            {username}
-          </p>
+          <div className="flex items-center justify-center gap-1.5">
+            <p className="text-[13px] text-muted-foreground font-medium">
+              {username}
+            </p>
+            {verifiedUsersList.includes(username) && (
+              <BadgeCheck className="h-4 w-4 text-cyan-400" />
+            )}
+          </div>
           <p className="text-[12px] text-foreground/70 mt-1 leading-snug max-w-[260px] mx-auto">
             {bio}
           </p>
+          <button
+            type="button"
+            data-ocid="profile.report.button"
+            onClick={() => setReportOpen(true)}
+            className="flex items-center gap-1 text-[11px] text-white/30 hover:text-red-400 transition-colors mt-1"
+          >
+            <Flag className="h-3 w-3" />
+            Report
+          </button>
         </div>
 
         {/* ── Stats Row ── */}
@@ -403,6 +441,35 @@ export default function ProfilePage({
           <Settings2 className="h-3.5 w-3.5 opacity-70" />
         </button>
 
+        {/* Go Live Button */}
+        {featureFlags.liveStreamingEnabled && (
+          <button
+            type="button"
+            data-ocid="livestream.go_live.button"
+            onClick={() => onGoLive?.()}
+            className="w-full max-w-[340px] py-2.5 rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold text-white bg-gradient-to-r from-red-700 to-rose-600 border border-red-500/30 hover:from-red-600 hover:to-rose-500 active:scale-[0.98] transition-all shadow-md shadow-red-900/30"
+          >
+            <span className="relative flex h-2.5 w-2.5 mr-1">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
+            </span>
+            Go Live
+          </button>
+        )}
+
+        {/* ── Log Out Button ── */}
+        <button
+          type="button"
+          data-ocid="profile.logout_button"
+          onClick={() => {
+            localStorage.removeItem("rohit_session");
+            window.location.reload();
+          }}
+          className="w-full max-w-[340px] py-2.5 rounded-xl flex items-center justify-center gap-2 text-[13px] font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 active:scale-[0.98] transition-all"
+        >
+          <LogOut className="h-4 w-4" />
+          Log Out
+        </button>
         {/* ── Creator Dashboard ── */}
         <motion.div
           data-ocid="profile.creator_dashboard.section"
@@ -633,6 +700,46 @@ export default function ProfilePage({
                   </div>
                 )}
               </div>
+
+              {/* Payout info */}
+              {(() => {
+                const earnings = calculateEarnings(viewsCount, followersCount);
+                const nextPayout = getNextPayoutDate();
+                return (
+                  <div
+                    className="rounded-xl p-3 space-y-1.5"
+                    style={{
+                      background: "rgba(6,182,212,0.08)",
+                      border: "1px solid rgba(6,182,212,0.2)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-white/50">
+                        Next Auto-Payout
+                      </span>
+                      <span className="text-[11px] font-bold text-cyan-400">
+                        {nextPayout}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-white/50">
+                        Real Views × ₹0.001
+                      </span>
+                      <span className="text-[11px] font-bold text-emerald-400">
+                        ₹{(viewsCount * 0.001).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-white/50">
+                        Revenue Split
+                      </span>
+                      <span className="text-[10px] font-bold text-purple-400">
+                        {earnings.splitLabel}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Tabs */}
               <Tabs value={walletTab} onValueChange={setWalletTab}>
@@ -912,6 +1019,74 @@ export default function ProfilePage({
           </motion.div>
         ))}
       </motion.div>
+
+      {/* ── Report Dialog ── */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent
+          data-ocid="profile.report.dialog"
+          className="bg-[oklch(0.11_0.01_270)] border border-white/10 rounded-2xl max-w-[340px]"
+        >
+          <DialogHeader>
+            <DialogTitle className="text-foreground text-[15px] font-bold">
+              Report Profile
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-1">
+            <p className="text-[12px] text-white/50">
+              Select a reason for reporting this profile:
+            </p>
+            <Select value={reportReason} onValueChange={setReportReason}>
+              <SelectTrigger
+                data-ocid="profile.report.select"
+                className="bg-white/[0.06] border-white/10 text-[13px]"
+              >
+                <SelectValue placeholder="Select reason..." />
+              </SelectTrigger>
+              <SelectContent className="bg-[oklch(0.14_0.02_270)] border-white/10">
+                <SelectItem value="Spam">Spam</SelectItem>
+                <SelectItem value="Fake Account">Fake Account</SelectItem>
+                <SelectItem value="Inappropriate Content">
+                  Inappropriate Content
+                </SelectItem>
+                <SelectItem value="Copyright Violation">
+                  Copyright Violation
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                data-ocid="profile.report.cancel_button"
+                variant="outline"
+                onClick={() => {
+                  setReportOpen(false);
+                  setReportReason("");
+                }}
+                className="flex-1 border-white/15 bg-white/[0.04] text-foreground/80 rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                data-ocid="profile.report.submit_button"
+                disabled={!reportReason}
+                onClick={() => {
+                  if (!reportReason) return;
+                  submitReport(username, reportReason, "You");
+                  setReportOpen(false);
+                  setReportReason("");
+                  toast.success(
+                    "Report submitted. Thank you for keeping the community safe.",
+                  );
+                }}
+                className="flex-1 bg-red-600/80 hover:bg-red-600 text-white border-0 rounded-xl"
+              >
+                Submit Report
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Edit Profile Sheet ── */}
       <Sheet open={editOpen} onOpenChange={setEditOpen}>

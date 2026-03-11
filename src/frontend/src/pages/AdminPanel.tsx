@@ -9,7 +9,9 @@ import {
   BookOpen,
   Camera,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
+  ChevronUp,
   Clock,
   Compass,
   DollarSign,
@@ -17,12 +19,18 @@ import {
   MessageCircle,
   Settings2,
   Shield,
+  ShieldAlert,
   XCircle,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { type FeatureFlags, useAdmin } from "../contexts/AdminContext";
+import { useAntiFraud } from "../contexts/AntiFraudContext";
+import {
+  calculateEarnings,
+  getNextPayoutDate,
+} from "../utils/monetizationEngine";
 
 const FEATURE_LIST: {
   key: keyof FeatureFlags;
@@ -71,6 +79,33 @@ const MOCK_USERS = [
   { id: "@vikas.r", name: "Vikas R" },
 ];
 
+const MOCK_CREATORS = [
+  {
+    name: "Rahul Sharma",
+    username: "@rahul.creates",
+    followers: 1_200_000,
+    views: 45_000_000,
+  },
+  {
+    name: "Priya Nair",
+    username: "@priya.viral",
+    followers: 250_000,
+    views: 18_000_000,
+  },
+  {
+    name: "Arjun Singh",
+    username: "@arjun.reels",
+    followers: 85_000,
+    views: 12_500_000,
+  },
+];
+
+const TRENDING_CREATORS = [
+  { name: "Mani Meraj", score: 9820, change: "+14%" },
+  { name: "Amit Bhadana", score: 8450, change: "+9%" },
+  { name: "Suraj Rokade", score: 7310, change: "+21%" },
+];
+
 function getInitials(name: string) {
   return name
     .trim()
@@ -92,6 +127,60 @@ interface WithdrawalRequest {
   status: "pending" | "approved" | "rejected";
   timestamp: string;
   userName: string;
+}
+
+function CollapsibleSection({
+  title,
+  icon,
+  children,
+  defaultOpen = false,
+  ocid,
+  accent,
+  badge,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  ocid: string;
+  accent?: string;
+  badge?: number;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div
+      data-ocid={ocid}
+      className="rounded-2xl overflow-hidden"
+      style={{
+        background: accent
+          ? `linear-gradient(135deg, ${accent})`
+          : "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.07)",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full px-4 py-3 flex items-center gap-2 border-b border-white/[0.07] text-left"
+      >
+        <span className="text-cyan-400">{icon}</span>
+        <span className="flex-1 text-[13px] font-bold uppercase tracking-widest text-white/60">
+          {title}
+        </span>
+        {badge !== undefined && badge > 0 && (
+          <span className="bg-red-500 text-white text-[10px] font-bold rounded-full px-2 py-0.5 min-w-[22px] text-center">
+            {badge}
+          </span>
+        )}
+        {open ? (
+          <ChevronUp className="h-4 w-4 text-white/30" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-white/30" />
+        )}
+      </button>
+      {open && <div>{children}</div>}
+    </div>
+  );
 }
 
 function WithdrawalRequestsList() {
@@ -219,7 +308,19 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
     adminAdRevenue,
     adminAdImpressions,
     resetAdRevenue,
+    reports,
+    totalViewRevenue,
+    addViewRevenue,
+    resolveReport,
   } = useAdmin();
+
+  const {
+    flaggedAccounts,
+    clearAccount,
+    deleteAccount,
+    runFullScan,
+    blockedDevices,
+  } = useAntiFraud();
 
   const [announcementDraft, setAnnouncementDraft] =
     useState(pinnedAnnouncement);
@@ -229,6 +330,15 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
   const [viewsDraft, setViewsDraft] = useState(
     String(monetizationTargets.views),
   );
+  const [autoPayout, setAutoPayout] = useState(true);
+  const [standardSplit, setStandardSplit] = useState(50);
+  const [bigCreatorSplit, setBigCreatorSplit] = useState(75);
+  const [qualityBoost, setQualityBoost] = useState(true);
+  const [paidCreators, setPaidCreators] = useState<Set<string>>(new Set());
+
+  const nextPayoutDate = getNextPayoutDate();
+  const pendingReports = reports.filter((r) => !r.resolved);
+  const activeFlagged = flaggedAccounts.filter((a) => a.status === "flagged");
 
   const handlePinAnnouncement = () => {
     setPinnedAnnouncement(announcementDraft.trim());
@@ -252,10 +362,21 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
     }
   };
 
-  const handleGoLive = () => {
-    toast.success("Go Live will be activated soon! Stay tuned.", {
-      duration: 4000,
-    });
+  // Go Live handled via liveStreamingEnabled toggle
+
+  const handleRunFraudScan = () => {
+    runFullScan();
+    toast.success("Fraud scan complete — flagged accounts updated.");
+  };
+
+  const handleProcessPayments = () => {
+    const newPaid = new Set(paidCreators);
+    for (const c of MOCK_CREATORS) {
+      const earnings = calculateEarnings(c.views, c.followers);
+      if (earnings.isEligible) newPaid.add(c.username);
+    }
+    setPaidCreators(newPaid);
+    toast.success("All eligible payments processed! ✓");
   };
 
   return (
@@ -329,32 +450,61 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
           </div>
         </motion.section>
 
-        {/* Section 2: Go Live */}
+        {/* Section 2: Live Broadcasting Toggle */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.05 }}
           data-ocid="admin.golive.section"
-          className="rounded-2xl bg-white/[0.04] border border-white/[0.07] p-4"
+          className="rounded-2xl bg-white/[0.04] border border-white/[0.07] overflow-hidden"
         >
-          <h2 className="text-[13px] font-bold uppercase tracking-widest text-white/50 mb-4">
-            Live Broadcasting
-          </h2>
-          <button
-            type="button"
-            data-ocid="admin.go_live.button"
-            onClick={handleGoLive}
-            className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 bg-gradient-to-r from-red-600/80 to-rose-500/80 border border-red-500/30 font-bold text-lg text-white shadow-lg shadow-red-900/30 active:scale-[0.98] transition-all"
-          >
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-70" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
-            </span>
-            Go Live
-          </button>
-          <p className="text-center text-[11px] text-white/30 mt-2">
-            Broadcasting will be activated in a future update
-          </p>
+          <div className="px-4 py-3 border-b border-white/[0.07]">
+            <h2 className="text-[13px] font-bold uppercase tracking-widest text-white/50">
+              Live Broadcasting
+            </h2>
+          </div>
+          <div className="px-4 py-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span
+                className={
+                  featureFlags.liveStreamingEnabled
+                    ? "text-red-500"
+                    : "text-white/30"
+                }
+              >
+                <span className="relative flex h-3 w-3">
+                  {featureFlags.liveStreamingEnabled && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-70" />
+                  )}
+                  <span
+                    className={`relative inline-flex rounded-full h-3 w-3 ${featureFlags.liveStreamingEnabled ? "bg-red-500" : "bg-white/20"}`}
+                  />
+                </span>
+              </span>
+              <div>
+                <Label
+                  htmlFor="toggle-liveStreamingEnabled"
+                  className="text-[14px] font-medium cursor-pointer"
+                >
+                  Live Streaming
+                </Label>
+                <p
+                  className={`text-[11px] mt-0.5 ${featureFlags.liveStreamingEnabled ? "text-green-400" : "text-white/30"}`}
+                >
+                  {featureFlags.liveStreamingEnabled
+                    ? "Creators can now go live"
+                    : "Live streaming is disabled"}
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="toggle-liveStreamingEnabled"
+              data-ocid="admin.livestream.toggle"
+              checked={featureFlags.liveStreamingEnabled}
+              onCheckedChange={() => toggleFeature("liveStreamingEnabled")}
+              aria-label="Toggle Live Streaming"
+            />
+          </div>
         </motion.section>
 
         {/* Section 3: Content Management */}
@@ -508,11 +658,9 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                     isBlocked ? "bg-red-900/10" : ""
                   }`}
                 >
-                  {/* Avatar */}
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-[12px] font-bold text-white shrink-0">
                     {getInitials(user.name)}
                   </div>
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[13px] font-semibold truncate">
@@ -524,7 +672,6 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                     </div>
                     <span className="text-[11px] text-white/40">{user.id}</span>
                   </div>
-                  {/* Actions */}
                   <div className="flex gap-2 shrink-0">
                     <button
                       type="button"
@@ -672,6 +819,578 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
             </button>
           </div>
         </motion.section>
+
+        {/* ─── NEW SECTIONS ─── */}
+
+        {/* Section A: Anti-Fraud Dashboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.3 }}
+        >
+          <CollapsibleSection
+            title="Anti-Fraud Dashboard"
+            icon={<ShieldAlert className="h-4 w-4" />}
+            ocid="admin.antifraud.section"
+            badge={activeFlagged.length}
+          >
+            <div className="px-4 py-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[12px] text-white/50">
+                    Blocked Devices:{" "}
+                    <span className="text-red-400 font-bold">
+                      {blockedDevices.length}
+                    </span>
+                  </p>
+                  <p className="text-[12px] text-white/50">
+                    Flagged Accounts:{" "}
+                    <span className="text-orange-400 font-bold">
+                      {flaggedAccounts.length}
+                    </span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  data-ocid="admin.antifraud.primary_button"
+                  onClick={handleRunFraudScan}
+                  className="px-4 py-2 rounded-xl text-[12px] font-bold bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25 transition-colors active:scale-95 shrink-0"
+                >
+                  🔍 Run Fraud Scan
+                </button>
+              </div>
+
+              {flaggedAccounts.length === 0 ? (
+                <div
+                  data-ocid="admin.antifraud.empty_state"
+                  className="py-6 text-center"
+                >
+                  <Shield className="h-8 w-8 text-white/15 mx-auto mb-2" />
+                  <p className="text-[12px] text-white/30">
+                    No flagged accounts. Run a scan to check.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {flaggedAccounts.map((acc, idx) => (
+                    <div
+                      key={acc.id}
+                      data-ocid={`admin.antifraud.item.${idx + 1}`}
+                      className="rounded-xl p-3 space-y-2"
+                      style={{
+                        background:
+                          acc.status === "deleted"
+                            ? "rgba(239,68,68,0.06)"
+                            : acc.status === "cleared"
+                              ? "rgba(34,197,94,0.06)"
+                              : "rgba(251,146,60,0.08)",
+                        border: `1px solid ${
+                          acc.status === "deleted"
+                            ? "rgba(239,68,68,0.2)"
+                            : acc.status === "cleared"
+                              ? "rgba(34,197,94,0.2)"
+                              : "rgba(251,146,60,0.2)"
+                        }`,
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <p className="text-[13px] font-bold text-white">
+                            {acc.username}
+                          </p>
+                          <p className="text-[11px] text-orange-300/80 mt-0.5">
+                            {acc.reason}
+                          </p>
+                          <p className="text-[10px] text-white/30 mt-0.5">
+                            Flagged{" "}
+                            {new Date(acc.flaggedAt).toLocaleDateString(
+                              "en-IN",
+                            )}
+                          </p>
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            acc.status === "deleted"
+                              ? "bg-red-500/15 border-red-500/30 text-red-400"
+                              : acc.status === "cleared"
+                                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                                : "bg-orange-500/15 border-orange-500/30 text-orange-400"
+                          }`}
+                        >
+                          {acc.status.charAt(0).toUpperCase() +
+                            acc.status.slice(1)}
+                        </span>
+                      </div>
+                      {acc.status === "flagged" && (
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            data-ocid={`admin.antifraud.confirm_button.${idx + 1}`}
+                            onClick={() => {
+                              clearAccount(acc.id);
+                              toast.success("Account cleared.");
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:scale-95 transition-all"
+                          >
+                            <CheckCircle2 className="h-3 w-3" /> Clear
+                          </button>
+                          <button
+                            type="button"
+                            data-ocid={`admin.antifraud.delete_button.${idx + 1}`}
+                            onClick={() => {
+                              deleteAccount(acc.id);
+                              toast.success(
+                                "Account deleted & device blocked.",
+                              );
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-red-500/15 border border-red-500/30 text-red-400 active:scale-95 transition-all"
+                          >
+                            <XCircle className="h-3 w-3" /> Delete & Block
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CollapsibleSection>
+        </motion.div>
+
+        {/* Section B: Auto-Payment Manager */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.32 }}
+        >
+          <CollapsibleSection
+            title="Auto-Payment Manager"
+            icon={<DollarSign className="h-4 w-4" />}
+            ocid="admin.payments.section"
+          >
+            <div className="px-4 py-4 space-y-4">
+              {/* Next payout + auto toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[12px] text-white/50">Next Payout Date</p>
+                  <p className="text-[14px] font-bold text-emerald-400">
+                    {nextPayoutDate}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] text-white/50">Auto-Payout</span>
+                  <Switch
+                    checked={autoPayout}
+                    onCheckedChange={setAutoPayout}
+                    data-ocid="admin.payments.auto_payout.switch"
+                  />
+                </div>
+              </div>
+
+              {/* Split settings */}
+              <div className="grid grid-cols-2 gap-3">
+                <div
+                  className="rounded-xl p-3"
+                  style={{
+                    background: "rgba(34,197,94,0.08)",
+                    border: "1px solid rgba(34,197,94,0.2)",
+                  }}
+                >
+                  <p className="text-[11px] text-white/50 mb-2">
+                    Standard Split (%)
+                  </p>
+                  <p className="text-[10px] text-white/40 mb-1">
+                    Creator gets:
+                  </p>
+                  <Input
+                    data-ocid="admin.payments.standard_split.input"
+                    type="number"
+                    value={standardSplit}
+                    onChange={(e) => setStandardSplit(Number(e.target.value))}
+                    className="bg-white/[0.06] border-white/10 text-sm h-8"
+                    min={1}
+                    max={99}
+                  />
+                  <p className="text-[10px] text-emerald-400 mt-1">
+                    {standardSplit}% / {100 - standardSplit}%
+                  </p>
+                </div>
+                <div
+                  className="rounded-xl p-3"
+                  style={{
+                    background: "rgba(168,85,247,0.08)",
+                    border: "1px solid rgba(168,85,247,0.2)",
+                  }}
+                >
+                  <p className="text-[11px] text-white/50 mb-2">
+                    Big Creator Split (%)
+                  </p>
+                  <p className="text-[10px] text-white/40 mb-1">
+                    Creator gets (1M+):
+                  </p>
+                  <Input
+                    data-ocid="admin.payments.big_creator_split.input"
+                    type="number"
+                    value={bigCreatorSplit}
+                    onChange={(e) => setBigCreatorSplit(Number(e.target.value))}
+                    className="bg-white/[0.06] border-white/10 text-sm h-8"
+                    min={1}
+                    max={99}
+                  />
+                  <p className="text-[10px] text-purple-400 mt-1">
+                    {bigCreatorSplit}% / {100 - bigCreatorSplit}%
+                  </p>
+                </div>
+              </div>
+
+              {/* Creators table */}
+              <div className="space-y-2">
+                <p className="text-[12px] font-semibold text-white/60">
+                  Eligible Creators
+                </p>
+                {MOCK_CREATORS.map((creator, idx) => {
+                  const split =
+                    creator.followers >= 1_000_000
+                      ? bigCreatorSplit
+                      : standardSplit;
+                  const earnings = calculateEarnings(
+                    creator.views,
+                    creator.followers,
+                  );
+                  const isPaid = paidCreators.has(creator.username);
+                  return (
+                    <div
+                      key={creator.username}
+                      data-ocid={`admin.payments.item.${idx + 1}`}
+                      className="rounded-xl p-3"
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div>
+                          <p className="text-[13px] font-semibold text-white">
+                            {creator.name}
+                          </p>
+                          <p className="text-[11px] text-white/40">
+                            {creator.username}
+                          </p>
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            isPaid
+                              ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                              : earnings.isEligible
+                                ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                                : "bg-white/5 border-white/10 text-white/30"
+                          }`}
+                        >
+                          {isPaid
+                            ? "Paid"
+                            : earnings.isEligible
+                              ? "Pending"
+                              : "Not Eligible"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1 mt-2">
+                        <div className="text-center">
+                          <p className="text-[9px] text-white/35 uppercase">
+                            Followers
+                          </p>
+                          <p className="text-[11px] font-bold text-white">
+                            {(creator.followers / 1000).toFixed(0)}K
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[9px] text-white/35 uppercase">
+                            Creator ₹
+                          </p>
+                          <p className="text-[11px] font-bold text-emerald-400">
+                            {earnings.creatorEarnings.toLocaleString("en-IN", {
+                              maximumFractionDigits: 0,
+                            })}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[9px] text-white/35 uppercase">
+                            Admin ₹
+                          </p>
+                          <p className="text-[11px] font-bold text-cyan-400">
+                            {earnings.adminEarnings.toLocaleString("en-IN", {
+                              maximumFractionDigits: 0,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-white/30 mt-1">
+                        {split}% creator / {100 - split}% admin
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                data-ocid="admin.payments.primary_button"
+                onClick={handleProcessPayments}
+                className="w-full py-3 rounded-xl text-[13px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 transition-colors active:scale-[0.98]"
+              >
+                ✅ Process All Payments
+              </button>
+            </div>
+          </CollapsibleSection>
+        </motion.div>
+
+        {/* Section C: View Revenue Dashboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.34 }}
+        >
+          <CollapsibleSection
+            title="View Revenue Dashboard"
+            icon={<DollarSign className="h-4 w-4" />}
+            ocid="admin.view_revenue.section"
+          >
+            <div className="px-4 py-4 space-y-4">
+              <div
+                className="rounded-xl p-4 text-center"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(6,182,212,0.1), rgba(139,92,246,0.1))",
+                  border: "1px solid rgba(6,182,212,0.25)",
+                }}
+              >
+                <p className="text-[11px] text-white/40 uppercase tracking-wider mb-1">
+                  Total View Revenue
+                </p>
+                <p
+                  className="text-[32px] font-black"
+                  style={{ color: "oklch(0.80 0.20 185)" }}
+                >
+                  ₹{totalViewRevenue.toFixed(2)}
+                </p>
+                <p className="text-[11px] text-white/35 mt-1">
+                  Every real view = ₹0.001 revenue
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div
+                  className="rounded-xl p-3 text-center"
+                  style={{
+                    background: "rgba(6,182,212,0.08)",
+                    border: "1px solid rgba(6,182,212,0.2)",
+                  }}
+                >
+                  <p className="text-[10px] text-white/40 mb-1">
+                    Admin's Share
+                  </p>
+                  <p className="text-[16px] font-black text-cyan-400">
+                    ₹{(totalViewRevenue * 0.5).toFixed(2)}
+                  </p>
+                  <p className="text-[10px] text-white/30">50%</p>
+                </div>
+                <div
+                  className="rounded-xl p-3 text-center"
+                  style={{
+                    background: "rgba(139,92,246,0.08)",
+                    border: "1px solid rgba(139,92,246,0.2)",
+                  }}
+                >
+                  <p className="text-[10px] text-white/40 mb-1">
+                    Creators' Share
+                  </p>
+                  <p className="text-[16px] font-black text-purple-400">
+                    ₹{(totalViewRevenue * 0.5).toFixed(2)}
+                  </p>
+                  <p className="text-[10px] text-white/30">50%</p>
+                </div>
+              </div>
+
+              <div
+                className="rounded-xl p-3"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <p className="text-[12px] text-white/50">
+                  Total Real Views:{" "}
+                  <span className="text-white font-bold">
+                    {Math.round(totalViewRevenue * 1000).toLocaleString()}
+                  </span>
+                </p>
+              </div>
+
+              <button
+                type="button"
+                data-ocid="admin.view_revenue.primary_button"
+                onClick={() => {
+                  addViewRevenue(10);
+                  toast.success("Added 10K test views (+₹10)");
+                }}
+                className="w-full py-2.5 rounded-xl text-[13px] font-semibold bg-cyan-500/10 border border-cyan-500/25 text-cyan-400 active:scale-[0.98] transition-transform"
+              >
+                + Add 10K Test Views (₹10)
+              </button>
+            </div>
+          </CollapsibleSection>
+        </motion.div>
+
+        {/* Section D: Reports Inbox */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.36 }}
+        >
+          <CollapsibleSection
+            title="Reports Inbox"
+            icon={<ShieldAlert className="h-4 w-4" />}
+            ocid="admin.reports.section"
+            badge={pendingReports.length}
+          >
+            {reports.length === 0 ? (
+              <div
+                data-ocid="admin.reports.empty_state"
+                className="px-4 py-8 text-center"
+              >
+                <Shield className="h-8 w-8 text-white/15 mx-auto mb-2" />
+                <p className="text-[12px] text-white/30">
+                  No reports submitted yet
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/[0.05]">
+                {reports.map((report, idx) => (
+                  <div
+                    key={report.id}
+                    data-ocid={`admin.reports.item.${idx + 1}`}
+                    className="px-4 py-3 flex items-start justify-between gap-3"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-bold text-white truncate">
+                          {report.reportedUser}
+                        </span>
+                        {report.resolved && (
+                          <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-full px-2 py-0.5">
+                            Resolved
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-red-300/80 mt-0.5">
+                        {report.reason}
+                      </p>
+                      <p className="text-[10px] text-white/30 mt-0.5">
+                        By {report.reportedBy} ·{" "}
+                        {new Date(report.timestamp).toLocaleDateString("en-IN")}
+                      </p>
+                    </div>
+                    {!report.resolved && (
+                      <button
+                        type="button"
+                        data-ocid={`admin.reports.confirm_button.${idx + 1}`}
+                        onClick={() => {
+                          resolveReport(report.id);
+                          toast.success("Report resolved.");
+                        }}
+                        className="shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:scale-95 transition-all"
+                      >
+                        Resolve
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CollapsibleSection>
+        </motion.div>
+
+        {/* Section E: Viral Algorithm Settings */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.38 }}
+        >
+          <CollapsibleSection
+            title="Viral Algorithm Settings"
+            icon={<Shield className="h-4 w-4" />}
+            ocid="admin.viral.section"
+          >
+            <div className="px-4 py-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[13px] font-semibold text-white">
+                    Quality Boost
+                  </p>
+                  <p className="text-[11px] text-white/40">
+                    High-quality posts ranked first
+                  </p>
+                </div>
+                <Switch
+                  checked={qualityBoost}
+                  onCheckedChange={setQualityBoost}
+                  data-ocid="admin.viral.quality_boost.switch"
+                />
+              </div>
+
+              <div
+                className="rounded-xl p-3"
+                style={{
+                  background: "rgba(6,182,212,0.06)",
+                  border: "1px solid rgba(6,182,212,0.15)",
+                }}
+              >
+                <p className="text-[11px] text-cyan-300/80">
+                  📊 Ranking formula:{" "}
+                  <strong className="text-cyan-400">
+                    (Likes + Comments×2 + Shares×3) ÷ Age
+                  </strong>
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[12px] font-semibold text-white/60">
+                  🔥 Top Trending Creators
+                </p>
+                {TRENDING_CREATORS.map((creator, idx) => (
+                  <div
+                    key={creator.name}
+                    data-ocid={`admin.viral.item.${idx + 1}`}
+                    className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] font-black text-white/30">
+                        #{idx + 1}
+                      </span>
+                      <span className="text-[13px] font-semibold text-white">
+                        {creator.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-[12px] font-bold"
+                        style={{ color: "oklch(0.80 0.20 185)" }}
+                      >
+                        {creator.score.toLocaleString()}
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-semibold">
+                        {creator.change}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CollapsibleSection>
+        </motion.div>
 
         {/* Footer */}
         <p className="text-center text-[11px] text-white/20 pb-4">
