@@ -16,78 +16,345 @@ import { SiInstagram, SiWhatsapp } from "react-icons/si";
 import { useAdmin } from "../contexts/AdminContext";
 import { useModeration } from "../contexts/ModerationContext";
 
-const REELS = [
+const BASE_REELS = [
   {
     id: 1,
-    username: "rohit.ai",
-    caption: "AI is changing everything 🤖✨ #RohitAITech",
-    song: "AI Vibes — Rohit Beats",
-    gradient: "from-[#0f0035] via-[#2d1b69] to-[#0a001f]",
+    username: "mani.meraj.official",
+    caption:
+      "Jab school mein pehli baar teacher ne notice kiya 😂 #ManiMeraj #BhojpuriComedy",
+    song: "Lahariya Loot - Bhojpuri Mix",
+    gradient: "from-[#1a0a00] via-[#3d1a00] to-[#1a0800]",
     accent:
-      "radial-gradient(ellipse 80% 70% at 60% 40%, oklch(0.55 0.28 300 / 0.6) 0%, transparent 70%)",
-    shimmer: "oklch(0.55 0.28 300 / 0.15)",
-    likes: 48200,
-    comments: 1240,
-    shares: 3800,
-    views: 1_200_000,
+      "radial-gradient(ellipse 80% 70% at 60% 40%, oklch(0.65 0.22 55 / 0.6) 0%, transparent 70%)",
+    shimmer: "oklch(0.65 0.22 55 / 0.15)",
+    likes: 482000,
+    comments: 38400,
+    shares: 152000,
+    views: 12_400_000,
   },
   {
     id: 2,
-    username: "priya.sharma",
-    caption: "Late night coding session 💻🔥 #Dev",
-    song: "Night Coder — Lo-Fi Mix",
-    gradient: "from-[#001a1a] via-[#00333a] to-[#001220]",
+    username: "mani.meraj.official",
+    caption:
+      "Gaon wale bhaiya ka jugaad dekho 🤣🔧 #ManiMeraj #Jugaad #Bhojpuri",
+    song: "Pawan Singh - Lollipop Lagelu",
+    gradient: "from-[#200a00] via-[#4a1500] to-[#1a0800]",
     accent:
-      "radial-gradient(ellipse 70% 80% at 30% 60%, oklch(0.65 0.18 185 / 0.55) 0%, transparent 65%)",
-    shimmer: "oklch(0.65 0.18 185 / 0.12)",
-    likes: 29100,
-    comments: 870,
-    shares: 2100,
-    views: 650_000,
+      "radial-gradient(ellipse 70% 65% at 40% 55%, oklch(0.6 0.25 40 / 0.55) 0%, transparent 65%)",
+    shimmer: "oklch(0.6 0.25 40 / 0.14)",
+    likes: 395000,
+    comments: 29800,
+    shares: 118000,
+    views: 9_800_000,
   },
   {
     id: 3,
-    username: "arjun.dev",
-    caption: "When your model finally converges 🎉 #ML",
-    song: "Neural Waves — SynthAI",
-    gradient: "from-[#1f0010] via-[#3d0030] to-[#1a0020]",
+    username: "mani.meraj.comedy",
+    caption: "Baap re baap! Ek number ka scene 😂😂 #ManiMeraj #Comedy #Viral",
+    song: "Khesari Lal - Superhit Bhojpuri",
+    gradient: "from-[#1a0500] via-[#3a1000] to-[#150600]",
     accent:
-      "radial-gradient(ellipse 75% 65% at 50% 50%, oklch(0.6 0.25 350 / 0.6) 0%, transparent 68%)",
-    shimmer: "oklch(0.6 0.25 350 / 0.14)",
-    likes: 61400,
-    comments: 2090,
-    shares: 5600,
-    views: 2_100_000,
+      "radial-gradient(ellipse 75% 70% at 55% 45%, oklch(0.68 0.20 50 / 0.58) 0%, transparent 68%)",
+    shimmer: "oklch(0.68 0.20 50 / 0.13)",
+    likes: 521000,
+    comments: 44200,
+    shares: 198000,
+    views: 14_200_000,
   },
   {
     id: 4,
-    username: "kavya.ai",
-    caption: "Building the future one line at a time 🚀",
-    song: "Future Bass — TechVibes",
-    gradient: "from-[#0a1500] via-[#1a3300] to-[#0a1500]",
+    username: "suraj.rokade",
+    caption: "Aai cha raag... legendary 😂 #SurajRokade #MarathiComedy #Viral",
+    song: "Zingaat Remix - Sairat",
+    gradient: "from-[#0d0020] via-[#2d0050] to-[#0d0030]",
     accent:
-      "radial-gradient(ellipse 80% 60% at 40% 45%, oklch(0.62 0.2 140 / 0.55) 0%, transparent 65%)",
-    shimmer: "oklch(0.62 0.2 140 / 0.12)",
-    likes: 34700,
-    comments: 1100,
-    shares: 2900,
-    views: 890_000,
+      "radial-gradient(ellipse 80% 65% at 50% 45%, oklch(0.55 0.28 295 / 0.6) 0%, transparent 70%)",
+    shimmer: "oklch(0.55 0.28 295 / 0.15)",
+    likes: 312000,
+    comments: 24600,
+    shares: 89000,
+    views: 7_600_000,
   },
   {
     id: 5,
-    username: "sneha.creates",
-    caption: "AI art is unreal 🎨✨ #AIArt #Creative",
-    song: "Digital Dream — ArtBot",
-    gradient: "from-[#00081f] via-[#001040] to-[#000d35]",
+    username: "suraj.rokade",
+    caption:
+      "Mumbai local mein ye scene nahi dekha hoga 😂🚂 #SurajRokade #Mumbai",
+    song: "DJ Wale Babu - Marathi Tadka",
+    gradient: "from-[#100025] via-[#250055] to-[#0f0035]",
     accent:
-      "radial-gradient(ellipse 70% 70% at 55% 45%, oklch(0.6 0.22 240 / 0.55) 0%, transparent 65%)",
-    shimmer: "oklch(0.6 0.22 240 / 0.13)",
-    likes: 52800,
-    comments: 1780,
-    shares: 4300,
-    views: 1_750_000,
+      "radial-gradient(ellipse 70% 70% at 45% 50%, oklch(0.58 0.26 300 / 0.55) 0%, transparent 65%)",
+    shimmer: "oklch(0.58 0.26 300 / 0.14)",
+    likes: 278000,
+    comments: 19800,
+    shares: 74000,
+    views: 6_200_000,
+  },
+  {
+    id: 6,
+    username: "amit.bhadana",
+    caption:
+      "Delhi ke ladke ka swag alag hota hai 😎 #AmitBhadana #Dilli #Comedy",
+    song: "Koi Kahe - Party Mix",
+    gradient: "from-[#000d20] via-[#001a40] to-[#000d30]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 55% 40%, oklch(0.55 0.22 240 / 0.6) 0%, transparent 70%)",
+    shimmer: "oklch(0.55 0.22 240 / 0.15)",
+    likes: 612000,
+    comments: 52000,
+    shares: 215000,
+    views: 15_600_000,
+  },
+  {
+    id: 7,
+    username: "amit.bhadana",
+    caption:
+      "Papa ke saath kya hota hai jab report card aata hai 🤣 #AmitBhadana #Relatable",
+    song: "Badshah - DJ Waley Babu",
+    gradient: "from-[#000a1f] via-[#00153a] to-[#000b28]",
+    accent:
+      "radial-gradient(ellipse 70% 60% at 40% 55%, oklch(0.6 0.20 235 / 0.55) 0%, transparent 65%)",
+    shimmer: "oklch(0.6 0.20 235 / 0.13)",
+    likes: 489000,
+    comments: 41000,
+    shares: 182000,
+    views: 12_100_000,
+  },
+  {
+    id: 8,
+    username: "amit.bhadana",
+    caption:
+      "Bhai ka jugaad level: God mode activated 🔥 #AmitBhadana #Jugaad #Dilli",
+    song: "Honey Singh - Blue Eyes Remix",
+    gradient: "from-[#001030] via-[#002050] to-[#001038]",
+    accent:
+      "radial-gradient(ellipse 80% 65% at 60% 45%, oklch(0.52 0.24 245 / 0.58) 0%, transparent 68%)",
+    shimmer: "oklch(0.52 0.24 245 / 0.14)",
+    likes: 356000,
+    comments: 28500,
+    shares: 124000,
+    views: 8_900_000,
+  },
+  {
+    id: 9,
+    username: "pushpa.fire",
+    caption:
+      "Pushpa: I am not a flower... I am fire 🔥 #Pushpa #AlluArjun #Viral",
+    song: "Srivalli - Pushpa OST",
+    gradient: "from-[#1a0000] via-[#3d0a00] to-[#1a0500]",
+    accent:
+      "radial-gradient(ellipse 80% 70% at 55% 40%, oklch(0.6 0.28 25 / 0.65) 0%, transparent 70%)",
+    shimmer: "oklch(0.6 0.28 25 / 0.16)",
+    likes: 728000,
+    comments: 68000,
+    shares: 298000,
+    views: 18_400_000,
+  },
+  {
+    id: 10,
+    username: "pushpa.fire",
+    caption:
+      "Pushpa Rule no. 1: Jhukega nahi 😤🔥 #PushpaRules #AlluArjun #Action",
+    song: "Oo Antava - Pushpa OST",
+    gradient: "from-[#200000] via-[#450800] to-[#1e0300]",
+    accent:
+      "radial-gradient(ellipse 70% 65% at 45% 50%, oklch(0.62 0.26 20 / 0.60) 0%, transparent 65%)",
+    shimmer: "oklch(0.62 0.26 20 / 0.15)",
+    likes: 594000,
+    comments: 51000,
+    shares: 241000,
+    views: 14_700_000,
+  },
+  {
+    id: 11,
+    username: "rrr.official.fan",
+    caption:
+      "RRR interval block - goosebumps every time 🎬 #RRR #Rajamouli #SS",
+    song: "Naatu Naatu - RRR",
+    gradient: "from-[#180000] via-[#380500] to-[#160200]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.58 0.28 15 / 0.62) 0%, transparent 68%)",
+    shimmer: "oklch(0.58 0.28 15 / 0.15)",
+    likes: 812000,
+    comments: 75000,
+    shares: 321000,
+    views: 21_000_000,
+  },
+  {
+    id: 12,
+    username: "rrr.official.fan",
+    caption:
+      "Naatu Naatu - Oscar winning performance 🏆🎶 #NaatuNaatu #RRR #Oscar",
+    song: "Naatu Naatu Full Song - RRR",
+    gradient: "from-[#1a0500] via-[#3a0e00] to-[#180400]",
+    accent:
+      "radial-gradient(ellipse 72% 68% at 55% 42%, oklch(0.65 0.25 28 / 0.58) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.25 28 / 0.14)",
+    likes: 698000,
+    comments: 61000,
+    shares: 276000,
+    views: 16_800_000,
+  },
+  {
+    id: 13,
+    username: "thalapathy.vibes",
+    caption: "Thalapathy entry BGM 🎶🔥 #Vijay #Leo #Thalapathy #Kollywood",
+    song: "Whistle Podu - Thalapathy",
+    gradient: "from-[#150000] via-[#350800] to-[#140200]",
+    accent:
+      "radial-gradient(ellipse 78% 68% at 48% 44%, oklch(0.62 0.27 22 / 0.62) 0%, transparent 70%)",
+    shimmer: "oklch(0.62 0.27 22 / 0.15)",
+    likes: 534000,
+    comments: 47000,
+    shares: 201000,
+    views: 13_200_000,
+  },
+  {
+    id: 14,
+    username: "thalapathy.vibes",
+    caption: "Leo climax scene - mass overload 💥 #Leo #Vijay #Tamil #Action",
+    song: "Leo Theme - Anirudh",
+    gradient: "from-[#1c0000] via-[#400a00] to-[#1a0400]",
+    accent:
+      "radial-gradient(ellipse 70% 70% at 52% 48%, oklch(0.60 0.26 18 / 0.60) 0%, transparent 66%)",
+    shimmer: "oklch(0.60 0.26 18 / 0.14)",
+    likes: 461000,
+    comments: 39000,
+    shares: 175000,
+    views: 11_500_000,
+  },
+  {
+    id: 15,
+    username: "kgf.rockingstar",
+    caption:
+      "Rocky bhai dialogue delivery - unmatched swag 💎 #KGF #YashBoss #Rocky",
+    song: "KGF Theme - Ravi Basrur",
+    gradient: "from-[#0a0a00] via-[#1e1a00] to-[#0a0900]",
+    accent:
+      "radial-gradient(ellipse 80% 65% at 50% 40%, oklch(0.68 0.22 80 / 0.58) 0%, transparent 68%)",
+    shimmer: "oklch(0.68 0.22 80 / 0.14)",
+    likes: 678000,
+    comments: 59000,
+    shares: 268000,
+    views: 17_300_000,
+  },
+  {
+    id: 16,
+    username: "bahubali.epic",
+    caption:
+      "Kattappa ne Baahubali ko kyun maara?! Still iconic 😱 #Baahubali #Prabhas",
+    song: "Baahubali - The Beginning Theme",
+    gradient: "from-[#060010] via-[#120025] to-[#060018]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.52 0.26 280 / 0.58) 0%, transparent 68%)",
+    shimmer: "oklch(0.52 0.26 280 / 0.14)",
+    likes: 892000,
+    comments: 82000,
+    shares: 348000,
+    views: 23_600_000,
+  },
+  {
+    id: 17,
+    username: "suraj.rokade.official",
+    caption:
+      "Office mein boss ke saath jhagda - comedy gold 😂 #SurajRokade #Office",
+    song: "Marathi DJ Beats 2024",
+    gradient: "from-[#0e001e] via-[#260048] to-[#0e0028]",
+    accent:
+      "radial-gradient(ellipse 72% 66% at 46% 52%, oklch(0.56 0.27 290 / 0.56) 0%, transparent 66%)",
+    shimmer: "oklch(0.56 0.27 290 / 0.13)",
+    likes: 243000,
+    comments: 18200,
+    shares: 68000,
+    views: 5_400_000,
+  },
+  {
+    id: 18,
+    username: "mani.meraj.official",
+    caption:
+      "Sasural ka scene dekho - pure comedy 😂🤣 #ManiMeraj #Sasural #Bhojpuri",
+    song: "Ritesh Pandey - Hit Song Mix",
+    gradient: "from-[#1e0800] via-[#421200] to-[#1c0600]",
+    accent:
+      "radial-gradient(ellipse 78% 68% at 58% 42%, oklch(0.66 0.21 48 / 0.56) 0%, transparent 68%)",
+    shimmer: "oklch(0.66 0.21 48 / 0.13)",
+    likes: 418000,
+    comments: 34000,
+    shares: 142000,
+    views: 10_600_000,
+  },
+  {
+    id: 19,
+    username: "south.mass.edits",
+    caption:
+      "Mahesh Babu attitude scene 😎💥 #MaheshBabu #Pokiri #Telugu #Mass",
+    song: "Pokiri Theme - Mani Sharma",
+    gradient: "from-[#100010] via-[#280025] to-[#100018]",
+    accent:
+      "radial-gradient(ellipse 76% 68% at 52% 44%, oklch(0.54 0.27 310 / 0.58) 0%, transparent 68%)",
+    shimmer: "oklch(0.54 0.27 310 / 0.14)",
+    likes: 387000,
+    comments: 32000,
+    shares: 135000,
+    views: 9_100_000,
+  },
+  {
+    id: 20,
+    username: "amit.bhadana",
+    caption:
+      "Rishtedar aate hain toh kya hota hai ghar mein 😂 #AmitBhadana #Family",
+    song: "Yo Yo Honey Singh - Brown Rang",
+    gradient: "from-[#000f25] via-[#001d45] to-[#000e32]",
+    accent:
+      "radial-gradient(ellipse 74% 66% at 44% 50%, oklch(0.58 0.21 242 / 0.56) 0%, transparent 66%)",
+    shimmer: "oklch(0.58 0.21 242 / 0.13)",
+    likes: 445000,
+    comments: 37500,
+    shares: 163000,
+    views: 11_200_000,
+  },
+  {
+    id: 21,
+    username: "vijay.sethupathi.fans",
+    caption:
+      "Makkal Selvan dialogue punch - pure gold 🥊 #VijaySetupathi #Tamil",
+    song: "Vikram Vedha Theme",
+    gradient: "from-[#001a10] via-[#003320] to-[#001518]",
+    accent:
+      "radial-gradient(ellipse 76% 68% at 50% 45%, oklch(0.58 0.22 155 / 0.58) 0%, transparent 68%)",
+    shimmer: "oklch(0.58 0.22 155 / 0.14)",
+    likes: 328000,
+    comments: 27000,
+    shares: 112000,
+    views: 8_200_000,
+  },
+  {
+    id: 22,
+    username: "rohit.shetty.action",
+    caption:
+      "Singham returns - gaadi ka scene legendary hai 🚗💥 #Singham #RohitShetty",
+    song: "Aata Majhi Satakli - Remix",
+    gradient: "from-[#1a1000] via-[#352000] to-[#181000]",
+    accent:
+      "radial-gradient(ellipse 74% 66% at 48% 42%, oklch(0.66 0.20 65 / 0.55) 0%, transparent 66%)",
+    shimmer: "oklch(0.66 0.20 65 / 0.13)",
+    likes: 267000,
+    comments: 21000,
+    shares: 92000,
+    views: 6_800_000,
   },
 ];
+
+let reelIdCounter = BASE_REELS.length + 1;
+
+function shuffleReels<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 // High-paying Interstitial Ads — revenue goes 100% to Admin Wallet
 const INTERSTITIAL_ADS = [
@@ -151,8 +418,19 @@ function formatCount(n: number): string {
 }
 
 type ToastMsg = { id: number; text: string };
+type Reel = (typeof BASE_REELS)[0];
 
 export default function ReelsPage() {
+  const [reels, setReels] = useState<Reel[]>(() => {
+    // Daily shuffle: check stored date
+    const today = new Date().toDateString();
+    const stored = localStorage.getItem("reels_shuffle_date");
+    if (stored !== today) {
+      localStorage.setItem("reels_shuffle_date", today);
+    }
+    return shuffleReels(BASE_REELS);
+  });
+
   const [likedReels, setLikedReels] = useState<Set<number>>(new Set());
   const [playingIndex, setPlayingIndex] = useState<number | null>(0);
   const [showPlayIcon, setShowPlayIcon] = useState<number | null>(null);
@@ -175,6 +453,7 @@ export default function ReelsPage() {
   const storyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastCounterRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const { getChannelStatus, getDeletionReason, getDeletionLabel } =
     useModeration();
   const { recordAdImpression } = useAdmin();
@@ -187,7 +466,34 @@ export default function ReelsPage() {
     }, 2800);
   }, []);
 
+  // Append more reels for infinite scroll
+  const appendMoreReels = useCallback(() => {
+    const count = 8 + Math.floor(Math.random() * 3); // 8-10
+    const shuffled = shuffleReels(BASE_REELS).slice(0, count);
+    const newReels = shuffled.map((r) => ({ ...r, id: reelIdCounter++ }));
+    setReels((prev) => [...prev, ...newReels]);
+  }, []);
+
+  // Sentinel IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            appendMoreReels();
+          }
+        }
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [appendMoreReels]);
+
   // Track scroll to detect new reel entering view
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-observe when reels list grows
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -229,7 +535,7 @@ export default function ReelsPage() {
       observer.observe(el);
     }
     return () => observer.disconnect();
-  }, []);
+  }, [reels.length]);
 
   // Skip countdown timer when interstitial is showing
   useEffect(() => {
@@ -278,7 +584,7 @@ export default function ReelsPage() {
   const closeShareSheet = useCallback(() => setShareSheetIndex(null), []);
 
   const handleCopyLink = useCallback(
-    (reel: (typeof REELS)[0]) => {
+    (reel: Reel) => {
       const url = `https://rohit-ai-tech.app/reel/${reel.id}`;
       navigator.clipboard
         .writeText(url)
@@ -290,7 +596,7 @@ export default function ReelsPage() {
   );
 
   const handleShareWhatsApp = useCallback(
-    (reel: (typeof REELS)[0]) => {
+    (reel: Reel) => {
       const url = `https://rohit-ai-tech.app/reel/${reel.id}`;
       const msg = encodeURIComponent(
         `${reel.caption}\n\nWatch on Rohit AI Tech: ${url}`,
@@ -307,7 +613,7 @@ export default function ReelsPage() {
   }, [showToast, closeShareSheet]);
 
   const handleMoreOptions = useCallback(
-    (reel: (typeof REELS)[0]) => {
+    (reel: Reel) => {
       const url = `https://rohit-ai-tech.app/reel/${reel.id}`;
       if (navigator.share) {
         navigator
@@ -327,7 +633,7 @@ export default function ReelsPage() {
     storyTimerRef.current = setTimeout(() => setStoryToastIndex(null), 2500);
   }, []);
 
-  const downloadReel = useCallback((reel: (typeof REELS)[0]) => {
+  const downloadReel = useCallback((reel: Reel) => {
     const canvas = document.createElement("canvas");
     canvas.width = 720;
     canvas.height = 1280;
@@ -380,7 +686,6 @@ export default function ReelsPage() {
     ctx.globalAlpha = 0.22;
     ctx.font = "italic bold 26px 'Arial', sans-serif";
     ctx.fillStyle = "#ffffff";
-    ctx.letterSpacing = "0.18em";
     ctx.fillText("✦ ROHIT AI TECH", 32, 64);
     ctx.globalAlpha = 0.18;
     ctx.fillText("✦ ROHIT AI TECH", canvas.width - 280, canvas.height - 48);
@@ -551,7 +856,7 @@ export default function ReelsPage() {
         )}
       </AnimatePresence>
 
-      {REELS.map((reel, reelIndex) => {
+      {reels.map((reel, reelIndex) => {
         const feedIndex = reelIndex;
         const liked = likedReels.has(reel.id);
         const isPlaying = playingIndex === reelIndex;
@@ -564,7 +869,6 @@ export default function ReelsPage() {
           : "bg-red-500/20 border-red-500/40 text-red-300";
         const isShareOpen = shareSheetIndex === reelIndex;
         const isStoryToast = storyToastIndex === reelIndex;
-        // currentFeedIndex tracked for future use
 
         return (
           <div
@@ -1085,6 +1389,9 @@ export default function ReelsPage() {
           </div>
         );
       })}
+
+      {/* Infinite scroll sentinel */}
+      <div ref={sentinelRef} className="h-1 w-full" />
 
       {/* Global toasts */}
       <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 pointer-events-none">
