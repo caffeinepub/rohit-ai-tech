@@ -28,7 +28,7 @@ export function getSession(): SessionData | null {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (parsed?.loggedIn === true) return parsed as SessionData;
+    if (parsed?.loggedIn === true && parsed?.name) return parsed as SessionData;
     return null;
   } catch {
     return null;

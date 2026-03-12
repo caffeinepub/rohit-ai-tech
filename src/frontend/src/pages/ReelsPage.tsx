@@ -1,13 +1,18 @@
 import {
+  Bell,
+  Compass,
   Copy,
   Download,
   Eye,
+  Film,
   Heart,
+  Home,
   MessageCircle,
   Music2,
   PlusCircle,
   Send,
   Share2,
+  User,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -344,12 +349,1166 @@ const BASE_REELS = [
     shares: 92000,
     views: 6_800_000,
   },
+  {
+    id: 23,
+    username: "narendra.modi.official",
+    caption:
+      "Mann Ki Baat - Desh ke vikas ki baat 🇮🇳✨ #MannKiBaat #Modi #India",
+    song: "Vande Mataram - A.R. Rahman",
+    gradient: "from-[#1a0800] via-[#3d1500] to-[#1a0500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.20 45 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.20 45 / 0.13)",
+    likes: 1200000,
+    comments: 85000,
+    shares: 320000,
+    views: 42000000,
+  },
+  {
+    id: 24,
+    username: "narendra.modi.official",
+    caption:
+      "Kashi Vishwanath Dham - Har Har Mahadev 🙏✨ #Kashi #Varanasi #Modi",
+    song: "Har Har Mahadev",
+    gradient: "from-[#1a0800] via-[#3d1500] to-[#1a0500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.20 45 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.20 45 / 0.13)",
+    likes: 980000,
+    comments: 72000,
+    shares: 280000,
+    views: 38000000,
+  },
+  {
+    id: 25,
+    username: "narendra.modi.official",
+    caption:
+      "Ayodhya Ram Mandir - Jai Shri Ram 🚩🙏 #RamMandir #Ayodhya #JaiShriRam",
+    song: "Jai Shri Ram - Devotional",
+    gradient: "from-[#1a0800] via-[#3d1500] to-[#1a0500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.20 45 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.20 45 / 0.13)",
+    likes: 1500000,
+    comments: 110000,
+    shares: 450000,
+    views: 50000000,
+  },
+  {
+    id: 26,
+    username: "narendra.modi.official",
+    caption: "Vikas ka safar jaari hai 🇮🇳💪 #ModiHai #NewIndia #Development",
+    song: "Mera Bharat Mahaan",
+    gradient: "from-[#1a0800] via-[#3d1500] to-[#1a0500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.20 45 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.20 45 / 0.13)",
+    likes: 870000,
+    comments: 64000,
+    shares: 210000,
+    views: 29000000,
+  },
+  {
+    id: 27,
+    username: "nitish.kumar.bihar",
+    caption:
+      "Bihar ka vikas - Janata Darbar mein janta ki seva 🙏 #BiharVikas #NitishKumar",
+    song: "Bihar Anthem",
+    gradient: "from-[#001a00] via-[#003300] to-[#001500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.18 145 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.18 145 / 0.13)",
+    likes: 420000,
+    comments: 32000,
+    shares: 98000,
+    views: 12000000,
+  },
+  {
+    id: 28,
+    username: "nitish.kumar.bihar",
+    caption:
+      "Bihar ki sadkon par naya sawera 🌅 #BiharRoads #Infrastructure #NitishKumar",
+    song: "Hum Honge Kamyaab",
+    gradient: "from-[#001a00] via-[#003300] to-[#001500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.18 145 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.18 145 / 0.13)",
+    likes: 310000,
+    comments: 24000,
+    shares: 76000,
+    views: 9500000,
+  },
+  {
+    id: 29,
+    username: "yogi.adityanath.up",
+    caption:
+      "UP mein Ram rajya - Ayodhya darshan 🚩🙏 #YogiAdityanath #UP #RamMandir",
+    song: "Jai Shri Ram",
+    gradient: "from-[#1a0800] via-[#2d1000] to-[#1a0800]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.60 0.19 35 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.60 0.19 35 / 0.13)",
+    likes: 680000,
+    comments: 51000,
+    shares: 160000,
+    views: 22000000,
+  },
+  {
+    id: 30,
+    username: "virat.kohli18",
+    caption:
+      "Century celebrate karna alag hi feel deta hai 🏏💯🔥 #Kohli #King #Cricket",
+    song: "Jai Ho - Slumdog Millionaire",
+    gradient: "from-[#000d1a] via-[#001530] to-[#000d25]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.20 230 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.20 230 / 0.13)",
+    likes: 1400000,
+    comments: 98000,
+    shares: 380000,
+    views: 48000000,
+  },
+  {
+    id: 31,
+    username: "virat.kohli18",
+    caption: "RCB ke liye dil deta hoon 🏏❤️ #RCB #PlayBold #Kohli18",
+    song: "Ee Sala Cup Namde",
+    gradient: "from-[#000d1a] via-[#001530] to-[#000d25]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.20 230 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.20 230 / 0.13)",
+    likes: 1100000,
+    comments: 82000,
+    shares: 290000,
+    views: 36000000,
+  },
+  {
+    id: 32,
+    username: "virat.kohli18",
+    caption:
+      "Team India ka jazbaa - World Cup 2024 champions 🏆🇮🇳 #TeamIndia #Champions",
+    song: "Ae Watan - Raazi",
+    gradient: "from-[#000d1a] via-[#001530] to-[#000d25]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.20 230 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.20 230 / 0.13)",
+    likes: 1300000,
+    comments: 95000,
+    shares: 360000,
+    views: 45000000,
+  },
+  {
+    id: 33,
+    username: "rohit.sharma45",
+    caption:
+      "Hitman ke ek shot mein match badal gaya 🏏💥 #RohitSharma #Hitman #IPL",
+    song: "Dil Dhadakne Do",
+    gradient: "from-[#001a1a] via-[#003030] to-[#001a20]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.17 195 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.17 195 / 0.13)",
+    likes: 920000,
+    comments: 68000,
+    shares: 245000,
+    views: 31000000,
+  },
+  {
+    id: 34,
+    username: "rohit.sharma45",
+    caption:
+      "Mumbai Indians ke saath ek aur yaadgaar pal 💙 #MumbaiIndians #IPL #Hitman",
+    song: "Duniya - Luka Chuppi",
+    gradient: "from-[#001a1a] via-[#003030] to-[#001a20]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.17 195 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.17 195 / 0.13)",
+    likes: 780000,
+    comments: 57000,
+    shares: 198000,
+    views: 26000000,
+  },
+  {
+    id: 35,
+    username: "ms.dhoni7",
+    caption:
+      "Helicopter shot - ek aur classic finish by Mahi Bhai 🚁🏏 #Dhoni #CSK #Finisher",
+    song: "CSK Anthem - Whistle Podu",
+    gradient: "from-[#1a1500] via-[#352a00] to-[#1a1200]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.70 0.19 75 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.70 0.19 75 / 0.13)",
+    likes: 1350000,
+    comments: 102000,
+    shares: 410000,
+    views: 47000000,
+  },
+  {
+    id: 36,
+    username: "ms.dhoni7",
+    caption:
+      "Mahi bhai CSK ke saath - Thala forever 💛 #Thala7 #Dhoni #WhistlePodu",
+    song: "Whistle Podu - CSK",
+    gradient: "from-[#1a1500] via-[#352a00] to-[#1a1200]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.70 0.19 75 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.70 0.19 75 / 0.13)",
+    likes: 1200000,
+    comments: 91000,
+    shares: 365000,
+    views: 42000000,
+  },
+  {
+    id: 37,
+    username: "ms.dhoni7",
+    caption:
+      "Retirement ke baad bhi dil mein jiyo Mahi 💛❤️ #Legend #MSDhoni #Cricket",
+    song: "Main Pal Do Pal Ka Shair",
+    gradient: "from-[#1a1500] via-[#352a00] to-[#1a1200]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.70 0.19 75 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.70 0.19 75 / 0.13)",
+    likes: 1450000,
+    comments: 118000,
+    shares: 480000,
+    views: 49000000,
+  },
+  {
+    id: 38,
+    username: "hardik.pandya33",
+    caption: "All-rounder swagger on point 😎🏏 #HardikPandya #IPL #Cricket",
+    song: "Bekhayali - Kabir Singh",
+    gradient: "from-[#1a001a] via-[#300030] to-[#1a0018]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 310 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 310 / 0.13)",
+    likes: 650000,
+    comments: 48000,
+    shares: 165000,
+    views: 21000000,
+  },
+  {
+    id: 39,
+    username: "shubman.gill77",
+    caption: "Cover drive jo dil jeet le 🏏✨ #ShubmanGill #YoungStar #Cricket",
+    song: "Kesariya - Brahmāstra",
+    gradient: "from-[#001015] via-[#001f2a] to-[#001018]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.60 0.18 200 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.60 0.18 200 / 0.13)",
+    likes: 580000,
+    comments: 43000,
+    shares: 148000,
+    views: 18000000,
+  },
+  {
+    id: 40,
+    username: "jasprit.bumrah93",
+    caption: "Yorker se stumps bikhar gaye 🎯🔥 #Bumrah #Wicket #FastBowling",
+    song: "Zinda - Bhaag Milkha",
+    gradient: "from-[#0d0d00] via-[#1a1a00] to-[#0d0d00]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.18 100 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.18 100 / 0.13)",
+    likes: 720000,
+    comments: 53000,
+    shares: 192000,
+    views: 24000000,
+  },
+  {
+    id: 41,
+    username: "pawan.singh.bhojpuri",
+    caption:
+      "Bhojpuri ke superstar ka naya dhamaka 🎵🔥 #PawanSingh #Bhojpuri #Superhit",
+    song: "Lollipop Lagelu - Pawan Singh",
+    gradient: "from-[#001a00] via-[#003300] to-[#001500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.18 145 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.18 145 / 0.13)",
+    likes: 890000,
+    comments: 67000,
+    shares: 245000,
+    views: 32000000,
+  },
+  {
+    id: 42,
+    username: "pawan.singh.bhojpuri",
+    caption:
+      "Stage pe aa gaye Pawan Raja 👑🎤 #PawanSingh #BhojpuriKing #Concert",
+    song: "Pawan Raja - Stage Show",
+    gradient: "from-[#001a00] via-[#003300] to-[#001500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.18 145 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.18 145 / 0.13)",
+    likes: 760000,
+    comments: 58000,
+    shares: 198000,
+    views: 27000000,
+  },
+  {
+    id: 43,
+    username: "pawan.singh.bhojpuri",
+    caption: "Superhit gaana jo dil chhoo le 🎵❤️ #PawanSingh #Bhojpuri #Viral",
+    song: "Tere Mast Mast Do Nain",
+    gradient: "from-[#001a00] via-[#003300] to-[#001500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.18 145 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.18 145 / 0.13)",
+    likes: 680000,
+    comments: 51000,
+    shares: 172000,
+    views: 23000000,
+  },
+  {
+    id: 44,
+    username: "khesari.lal.bhojpuri",
+    caption:
+      "Khesari bhaiya ka zabardast gaana 🎤🔥 #KhesariLal #Bhojpuri #Superhit",
+    song: "Hile Le Bihar - Khesari Lal",
+    gradient: "from-[#001a08] via-[#003015] to-[#001a0a]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.58 0.18 160 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.58 0.18 160 / 0.13)",
+    likes: 620000,
+    comments: 47000,
+    shares: 158000,
+    views: 20000000,
+  },
+  {
+    id: 45,
+    username: "dinesh.nirahua",
+    caption:
+      "Nirahua Hindustani - comedy ka jodidaar 😂🎬 #Nirahua #Bhojpuri #Comedy",
+    song: "Nirahua Hindustani Theme",
+    gradient: "from-[#0d0a00] via-[#1a1500] to-[#0d0a00]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.68 0.17 70 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.68 0.17 70 / 0.13)",
+    likes: 540000,
+    comments: 41000,
+    shares: 138000,
+    views: 17000000,
+  },
+  {
+    id: 46,
+    username: "srk.king.khan",
+    caption:
+      "Tujhe dekha toh yeh jaana sanam 💛🌾 #DDLJ #SRK #ShahRukhKhan #Legend",
+    song: "Tujhe Dekha Toh - DDLJ",
+    gradient: "from-[#0d0018] via-[#1a0030] to-[#0d0020]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.50 0.22 295 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.50 0.22 295 / 0.13)",
+    likes: 1250000,
+    comments: 94000,
+    shares: 395000,
+    views: 44000000,
+  },
+  {
+    id: 47,
+    username: "srk.king.khan",
+    caption: "Pathaan aa gaya 💥🔥 #Pathaan #SRK #Bollywood #KingKhan",
+    song: "Jhoome Jo Pathaan",
+    gradient: "from-[#0d0018] via-[#1a0030] to-[#0d0020]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.50 0.22 295 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.50 0.22 295 / 0.13)",
+    likes: 1100000,
+    comments: 84000,
+    shares: 340000,
+    views: 40000000,
+  },
+  {
+    id: 48,
+    username: "srk.king.khan",
+    caption: "Duniya mein naam karo - inspirational 💫 #SRK #Motivation #King",
+    song: "Chak De! India",
+    gradient: "from-[#0d0018] via-[#1a0030] to-[#0d0020]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.50 0.22 295 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.50 0.22 295 / 0.13)",
+    likes: 980000,
+    comments: 73000,
+    shares: 285000,
+    views: 35000000,
+  },
+  {
+    id: 49,
+    username: "salman.bhai.official",
+    caption:
+      "Dabangg chaal - Bhai ne wapsi ki 😎💪 #Salman #Dabangg #Bollywood",
+    song: "Dabangg Theme",
+    gradient: "from-[#1a0000] via-[#330000] to-[#1a0000]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 15 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 15 / 0.13)",
+    likes: 1050000,
+    comments: 78000,
+    shares: 310000,
+    views: 38000000,
+  },
+  {
+    id: 50,
+    username: "salman.bhai.official",
+    caption: "Tiger Zinda Hai - Bhai ka action 🐯💥 #Tiger #SalmanKhan #Action",
+    song: "Tiger Zinda Hai Theme",
+    gradient: "from-[#1a0000] via-[#330000] to-[#1a0000]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 15 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 15 / 0.13)",
+    likes: 920000,
+    comments: 69000,
+    shares: 265000,
+    views: 34000000,
+  },
+  {
+    id: 51,
+    username: "akshay.kumar.official",
+    caption:
+      "Bharat mata ki jai - patriotism at its best 🇮🇳❤️ #AkshayKumar #Kesari",
+    song: "Teri Mitti - Kesari",
+    gradient: "from-[#1a0800] via-[#2a1000] to-[#1a0800]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.62 0.19 40 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.62 0.19 40 / 0.13)",
+    likes: 840000,
+    comments: 62000,
+    shares: 225000,
+    views: 30000000,
+  },
+  {
+    id: 52,
+    username: "akshay.kumar.official",
+    caption:
+      "Comedy king Akshay Kumar - hasate hasate rula diya 😂❤️ #Akshay #Comedy",
+    song: "Hud Hud Dabangg",
+    gradient: "from-[#1a0800] via-[#2a1000] to-[#1a0800]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.62 0.19 40 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.62 0.19 40 / 0.13)",
+    likes: 710000,
+    comments: 54000,
+    shares: 186000,
+    views: 25000000,
+  },
+  {
+    id: 53,
+    username: "ranveer.singh.official",
+    caption:
+      "Energy aur josh - Ranveer on fire 🔥💥 #RanveerSingh #Energy #Bollywood",
+    song: "Malhari - Bajirao Mastani",
+    gradient: "from-[#1a1500] via-[#2a2000] to-[#1a1500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.68 0.20 80 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.68 0.20 80 / 0.13)",
+    likes: 780000,
+    comments: 58000,
+    shares: 205000,
+    views: 27000000,
+  },
+  {
+    id: 54,
+    username: "deepika.padukone",
+    caption:
+      "Pathaan ki jaan - Deepika ka zabardast look 💖✨ #Deepika #Pathaan",
+    song: "Besharam Rang - Pathaan",
+    gradient: "from-[#1a0010] via-[#300020] to-[#1a0015]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 340 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 340 / 0.13)",
+    likes: 950000,
+    comments: 71000,
+    shares: 268000,
+    views: 33000000,
+  },
+  {
+    id: 55,
+    username: "narendra.modi.official",
+    caption:
+      "Digital India - technology se desh badal raha hai 💻🇮🇳 #DigitalIndia #Modi",
+    song: "Suno Gaur Se Duniya Walon",
+    gradient: "from-[#1a0800] via-[#3d1500] to-[#1a0500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.20 45 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.20 45 / 0.13)",
+    likes: 820000,
+    comments: 61000,
+    shares: 195000,
+    views: 27000000,
+  },
+  {
+    id: 56,
+    username: "virat.kohli18",
+    caption:
+      "Practice makes perfect - har din mehnat karo 💪🏏 #Kohli #Dedication",
+    song: "Rocky Theme",
+    gradient: "from-[#000d1a] via-[#001530] to-[#000d25]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.20 230 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.20 230 / 0.13)",
+    likes: 890000,
+    comments: 66000,
+    shares: 230000,
+    views: 30000000,
+  },
+  {
+    id: 57,
+    username: "ms.dhoni7",
+    caption: "Cool as always - Mahi bhai ki shanti 🧘💛 #Dhoni #CSKFinal #Calm",
+    song: "Tum Ho - Rockstar",
+    gradient: "from-[#1a1500] via-[#352a00] to-[#1a1200]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.70 0.19 75 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.70 0.19 75 / 0.13)",
+    likes: 1100000,
+    comments: 83000,
+    shares: 340000,
+    views: 41000000,
+  },
+  {
+    id: 58,
+    username: "pawan.singh.bhojpuri",
+    caption:
+      "Bhojpuri music ki jaan - dil se gaate hain 🎵💚 #PawanSingh #Music",
+    song: "Patna Se Pakistan - Pawan Singh",
+    gradient: "from-[#001a00] via-[#003300] to-[#001500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.18 145 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.18 145 / 0.13)",
+    likes: 730000,
+    comments: 55000,
+    shares: 185000,
+    views: 25000000,
+  },
+  {
+    id: 59,
+    username: "rohit.sharma45",
+    caption:
+      "Aisa six maara ki ball stadium se baahar gayi 🏏🔥 #RohitSharma #Six",
+    song: "Gallan Goodiyaan - Dil Dhadakne Do",
+    gradient: "from-[#001a1a] via-[#003030] to-[#001a20]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.17 195 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.17 195 / 0.13)",
+    likes: 860000,
+    comments: 64000,
+    shares: 215000,
+    views: 29000000,
+  },
+  {
+    id: 60,
+    username: "srk.king.khan",
+    caption:
+      "Baazigar O Baazigar - SRK's iconic villain 🖤🎬 #Baazigar #SRK #Classic",
+    song: "Baazigar O Baazigar",
+    gradient: "from-[#0d0018] via-[#1a0030] to-[#0d0020]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.50 0.22 295 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.50 0.22 295 / 0.13)",
+    likes: 1020000,
+    comments: 76000,
+    shares: 310000,
+    views: 37000000,
+  },
+  {
+    id: 61,
+    username: "nitish.kumar.bihar",
+    caption:
+      "Har ghar nal jal - Bihar mein swachh paani 💧✅ #JalJeevanMission #Bihar",
+    song: "Paani Da Rang",
+    gradient: "from-[#001a00] via-[#003300] to-[#001500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.18 145 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.18 145 / 0.13)",
+    likes: 280000,
+    comments: 21000,
+    shares: 68000,
+    views: 8500000,
+  },
+  {
+    id: 62,
+    username: "jasprit.bumrah93",
+    caption:
+      "Death over specialist - last over magic 🎯🏏 #Bumrah #IPL #DeathBowling",
+    song: "Sauda Khara Khara",
+    gradient: "from-[#0d0d00] via-[#1a1a00] to-[#0d0d00]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.18 100 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.18 100 / 0.13)",
+    likes: 680000,
+    comments: 51000,
+    shares: 174000,
+    views: 22000000,
+  },
+  {
+    id: 63,
+    username: "salman.bhai.official",
+    caption: "Race 3 - race abhi baki hai 🏎️🔥 #Race3 #Salman #Action",
+    song: "Allah Duhai Hai - Race 3",
+    gradient: "from-[#1a0000] via-[#330000] to-[#1a0000]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 15 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 15 / 0.13)",
+    likes: 840000,
+    comments: 63000,
+    shares: 235000,
+    views: 31000000,
+  },
+  {
+    id: 64,
+    username: "hardik.pandya33",
+    caption:
+      "Ek haath se shot, doosre haath se wicket 🏏💪 #Pandya #AllRounder",
+    song: "Apna Time Aayega - Gully Boy",
+    gradient: "from-[#1a001a] via-[#300030] to-[#1a0018]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 310 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 310 / 0.13)",
+    likes: 590000,
+    comments: 44000,
+    shares: 152000,
+    views: 19000000,
+  },
+  {
+    id: 65,
+    username: "akshay.kumar.official",
+    caption:
+      "Mission Mangal - science aur desh bhakti ek saath 🚀🇮🇳 #MissionMangal",
+    song: "Dher Samara - Mission Mangal",
+    gradient: "from-[#1a0800] via-[#2a1000] to-[#1a0800]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.62 0.19 40 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.62 0.19 40 / 0.13)",
+    likes: 760000,
+    comments: 57000,
+    shares: 198000,
+    views: 26000000,
+  },
+  {
+    id: 66,
+    username: "yogi.adityanath.up",
+    caption: "UP ki mahila suraksha - nari shakti 💪🙏 #NariShakti #UP #YogiJi",
+    song: "Nari Shakti Anthem",
+    gradient: "from-[#1a0800] via-[#2d1000] to-[#1a0800]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.60 0.19 35 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.60 0.19 35 / 0.13)",
+    likes: 520000,
+    comments: 39000,
+    shares: 128000,
+    views: 16000000,
+  },
+  {
+    id: 67,
+    username: "ranveer.singh.official",
+    caption:
+      "83 - World Cup 1983 ki yaad taaza karni ho toh 🏏🏆 #83TheFilm #Kapil",
+    song: "Lehra Do - 83",
+    gradient: "from-[#1a1500] via-[#2a2000] to-[#1a1500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.68 0.20 80 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.68 0.20 80 / 0.13)",
+    likes: 670000,
+    comments: 50000,
+    shares: 175000,
+    views: 23000000,
+  },
+  {
+    id: 68,
+    username: "shubman.gill77",
+    caption:
+      "New generation cricket - Gujarat Titans ke hero 🏏⭐ #ShubmanGill #GT",
+    song: "Sooraj Dooba Hai - Roy",
+    gradient: "from-[#001015] via-[#001f2a] to-[#001018]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.60 0.18 200 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.60 0.18 200 / 0.13)",
+    likes: 520000,
+    comments: 39000,
+    shares: 135000,
+    views: 17000000,
+  },
+  {
+    id: 69,
+    username: "khesari.lal.bhojpuri",
+    caption:
+      "Superhit gaana - Bhojpur ke superstar ne dil jeet liya 🎤❤️ #Khesari",
+    song: "Nathuniya Pe Goli Maare - Khesari",
+    gradient: "from-[#001a08] via-[#003015] to-[#001a0a]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.58 0.18 160 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.58 0.18 160 / 0.13)",
+    likes: 580000,
+    comments: 44000,
+    shares: 150000,
+    views: 19000000,
+  },
+  {
+    id: 70,
+    username: "narendra.modi.official",
+    caption:
+      "Swachh Bharat Abhiyan - Clean India mission 🧹🇮🇳 #SwachhBharat #Modi",
+    song: "Jana Gana Mana",
+    gradient: "from-[#1a0800] via-[#3d1500] to-[#1a0500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.20 45 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.20 45 / 0.13)",
+    likes: 760000,
+    comments: 57000,
+    shares: 178000,
+    views: 25000000,
+  },
+  {
+    id: 71,
+    username: "virat.kohli18",
+    caption:
+      "Ek aur unbeatable inning - dilse khele hain 🏏💯 #Kohli #Masterclass",
+    song: "Zindagi Na Milegi Dobara",
+    gradient: "from-[#000d1a] via-[#001530] to-[#000d25]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.20 230 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.20 230 / 0.13)",
+    likes: 1050000,
+    comments: 78000,
+    shares: 310000,
+    views: 39000000,
+  },
+  {
+    id: 72,
+    username: "ms.dhoni7",
+    caption:
+      "Last ball finish - Mahi bhai ne phir kar dikhaya 🏏🙌 #Dhoni #Legend",
+    song: "Dhoni Anthem",
+    gradient: "from-[#1a1500] via-[#352a00] to-[#1a1200]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.70 0.19 75 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.70 0.19 75 / 0.13)",
+    likes: 1300000,
+    comments: 98000,
+    shares: 420000,
+    views: 46000000,
+  },
+  {
+    id: 73,
+    username: "deepika.padukone",
+    caption:
+      "Om Shanti Om - ek din woh lamhe waapas aayenge ✨💫 #DeepikaPadukone #OSO",
+    song: "Dard-E-Disco - Om Shanti Om",
+    gradient: "from-[#1a0010] via-[#300020] to-[#1a0015]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 340 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 340 / 0.13)",
+    likes: 820000,
+    comments: 61000,
+    shares: 218000,
+    views: 28000000,
+  },
+  {
+    id: 74,
+    username: "pawan.singh.bhojpuri",
+    caption:
+      "Chhath Puja special - Jai Chhathi Maiya 🙏🌅 #ChhathPuja #PawanSingh",
+    song: "Kaanch Hi Baans Ke Bahangiya - Chhath",
+    gradient: "from-[#001a00] via-[#003300] to-[#001500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.18 145 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.18 145 / 0.13)",
+    likes: 850000,
+    comments: 64000,
+    shares: 220000,
+    views: 30000000,
+  },
+  {
+    id: 75,
+    username: "srk.king.khan",
+    caption:
+      "Dilwale Dulhania Le Jayenge - 30 saal bad bhi yeh film dil jeerti hai 💛 #DDLJ",
+    song: "Tujhe Dekha Toh",
+    gradient: "from-[#0d0018] via-[#1a0030] to-[#0d0020]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.50 0.22 295 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.50 0.22 295 / 0.13)",
+    likes: 1150000,
+    comments: 87000,
+    shares: 365000,
+    views: 42000000,
+  },
+  {
+    id: 76,
+    username: "salman.bhai.official",
+    caption: "Being Human - dil se deta hoon 💙❤️ #BeingHuman #Salman #Charity",
+    song: "Being Human Theme",
+    gradient: "from-[#1a0000] via-[#330000] to-[#1a0000]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 15 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 15 / 0.13)",
+    likes: 960000,
+    comments: 72000,
+    shares: 285000,
+    views: 33000000,
+  },
+  {
+    id: 77,
+    username: "rohit.sharma45",
+    caption:
+      "India Captain - meri team, mera desh 🇮🇳🏏 #TeamIndia #Captain #Rohit",
+    song: "Jai Ho - AR Rahman",
+    gradient: "from-[#001a1a] via-[#003030] to-[#001a20]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.17 195 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.17 195 / 0.13)",
+    likes: 870000,
+    comments: 65000,
+    shares: 235000,
+    views: 31000000,
+  },
+  {
+    id: 78,
+    username: "akshay.kumar.official",
+    caption:
+      "Sooryavanshi - police thoda alag hai 👮💥 #Sooryavanshi #Akshay #Action",
+    song: "Aila Re Aillaa - Sooryavanshi",
+    gradient: "from-[#1a0800] via-[#2a1000] to-[#1a0800]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.62 0.19 40 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.62 0.19 40 / 0.13)",
+    likes: 730000,
+    comments: 55000,
+    shares: 190000,
+    views: 25000000,
+  },
+  {
+    id: 79,
+    username: "dinesh.nirahua",
+    caption:
+      "Nirahua rickshawala - comedy ka baap 😂🚗 #Nirahua #Bhojpuri #Comedy",
+    song: "Nirahua Rickshawala Theme",
+    gradient: "from-[#0d0a00] via-[#1a1500] to-[#0d0a00]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.68 0.17 70 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.68 0.17 70 / 0.13)",
+    likes: 490000,
+    comments: 37000,
+    shares: 125000,
+    views: 16000000,
+  },
+  {
+    id: 80,
+    username: "narendra.modi.official",
+    caption: "Yoga Day - swasthya hi dhan hai 🧘🇮🇳 #YogaDay #Modi #Health",
+    song: "Surya Namaskar",
+    gradient: "from-[#1a0800] via-[#3d1500] to-[#1a0500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.20 45 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.20 45 / 0.13)",
+    likes: 1100000,
+    comments: 82000,
+    shares: 320000,
+    views: 38000000,
+  },
+  {
+    id: 81,
+    username: "jasprit.bumrah93",
+    caption:
+      "Hat-trick wickets - unplayable bowling 🎯🏏 #Bumrah #HatTrick #Wickets",
+    song: "Unstoppable - sia",
+    gradient: "from-[#0d0d00] via-[#1a1a00] to-[#0d0d00]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.18 100 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.18 100 / 0.13)",
+    likes: 750000,
+    comments: 56000,
+    shares: 198000,
+    views: 25000000,
+  },
+  {
+    id: 82,
+    username: "ranveer.singh.official",
+    caption: "Ram-Leela dance sequence - epic 🔥💫 #RamLeela #Ranveer #Dance",
+    song: "Nagada Sang Dhol - Ram Leela",
+    gradient: "from-[#1a1500] via-[#2a2000] to-[#1a1500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.68 0.20 80 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.68 0.20 80 / 0.13)",
+    likes: 720000,
+    comments: 54000,
+    shares: 188000,
+    views: 24000000,
+  },
+  {
+    id: 83,
+    username: "virat.kohli18",
+    caption:
+      "Fitness goals - gym mein aisa hi todte hain 💪🏋️ #Kohli #Fitness #Gym",
+    song: "Power - Kanye West",
+    gradient: "from-[#000d1a] via-[#001530] to-[#000d25]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.20 230 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.20 230 / 0.13)",
+    likes: 980000,
+    comments: 73000,
+    shares: 265000,
+    views: 33000000,
+  },
+  {
+    id: 84,
+    username: "ms.dhoni7",
+    caption: "Ranchi ka laadla - ghar wapsi 🏠💛 #Dhoni #Ranchi #Hometown",
+    song: "Pal - Jalebi",
+    gradient: "from-[#1a1500] via-[#352a00] to-[#1a1200]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.70 0.19 75 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.70 0.19 75 / 0.13)",
+    likes: 1080000,
+    comments: 81000,
+    shares: 325000,
+    views: 40000000,
+  },
+  {
+    id: 85,
+    username: "khesari.lal.bhojpuri",
+    caption:
+      "Holi ke rang - rang barse Bhojpuri mein 🎨🎵 #Holi #Khesari #Bhojpuri",
+    song: "Rang Barse - Khesari version",
+    gradient: "from-[#001a08] via-[#003015] to-[#001a0a]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.58 0.18 160 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.58 0.18 160 / 0.13)",
+    likes: 640000,
+    comments: 48000,
+    shares: 162000,
+    views: 21000000,
+  },
+  {
+    id: 86,
+    username: "srk.king.khan",
+    caption:
+      "Jab Tak Hai Jaan - pyaar ki koi seema nahi 💛 #JTHJaan #SRK #Love",
+    song: "Ishq Shava - Jab Tak Hai Jaan",
+    gradient: "from-[#0d0018] via-[#1a0030] to-[#0d0020]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.50 0.22 295 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.50 0.22 295 / 0.13)",
+    likes: 1080000,
+    comments: 81000,
+    shares: 325000,
+    views: 39000000,
+  },
+  {
+    id: 87,
+    username: "hardik.pandya33",
+    caption:
+      "World Cup 2024 final mein chamke ⭐🏆 #Pandya #WorldCup #Champion",
+    song: "Winners Theme",
+    gradient: "from-[#1a001a] via-[#300030] to-[#1a0018]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 310 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 310 / 0.13)",
+    likes: 620000,
+    comments: 47000,
+    shares: 162000,
+    views: 21000000,
+  },
+  {
+    id: 88,
+    username: "yogi.adityanath.up",
+    caption:
+      "UP exports - agriculture aur industry mein naya adhyay 🌾🏭 #UPVikas #Yogi",
+    song: "Ye Desh Hai Veer Jawanon Ka",
+    gradient: "from-[#1a0800] via-[#2d1000] to-[#1a0800]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.60 0.19 35 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.60 0.19 35 / 0.13)",
+    likes: 460000,
+    comments: 35000,
+    shares: 112000,
+    views: 14000000,
+  },
+  {
+    id: 89,
+    username: "salman.bhai.official",
+    caption: "Kick - Bhai ka kick abhi bhi yaad hai 👊💥 #Kick #Salman #Action",
+    song: "Jumme Ki Raat - Kick",
+    gradient: "from-[#1a0000] via-[#330000] to-[#1a0000]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 15 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 15 / 0.13)",
+    likes: 890000,
+    comments: 67000,
+    shares: 245000,
+    views: 32000000,
+  },
+  {
+    id: 90,
+    username: "deepika.padukone",
+    caption:
+      "Gehraiyaan - dil ki gehraayi mein doob gaye 💙✨ #Gehraiyaan #Deepika",
+    song: "Light - Gehraiyaan",
+    gradient: "from-[#1a0010] via-[#300020] to-[#1a0015]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 340 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 340 / 0.13)",
+    likes: 870000,
+    comments: 65000,
+    shares: 230000,
+    views: 30000000,
+  },
+  {
+    id: 91,
+    username: "pawan.singh.bhojpuri",
+    caption: "Eid Mubarak - sabko khushiyan mile 🌙⭐ #EidMubarak #PawanSingh",
+    song: "Mehboob Mere - Fiza",
+    gradient: "from-[#001a00] via-[#003300] to-[#001500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.18 145 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.18 145 / 0.13)",
+    likes: 660000,
+    comments: 49000,
+    shares: 170000,
+    views: 22000000,
+  },
+  {
+    id: 92,
+    username: "rohit.sharma45",
+    caption:
+      "Triple century - history rachayi 🏏📖 #RohitSharma #TripleCentury #Record",
+    song: "Badtameez Dil",
+    gradient: "from-[#001a1a] via-[#003030] to-[#001a20]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.17 195 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.17 195 / 0.13)",
+    likes: 950000,
+    comments: 71000,
+    shares: 258000,
+    views: 34000000,
+  },
+  {
+    id: 93,
+    username: "akshay.kumar.official",
+    caption:
+      "Toilet Ek Prem Katha - ek badlav jo desh mein aaya 🚿🇮🇳 #Akshay #SwachhBharat",
+    song: "Hans Mat Pagli - Toilet",
+    gradient: "from-[#1a0800] via-[#2a1000] to-[#1a0800]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.62 0.19 40 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.62 0.19 40 / 0.13)",
+    likes: 690000,
+    comments: 52000,
+    shares: 178000,
+    views: 23000000,
+  },
+  {
+    id: 94,
+    username: "shubman.gill77",
+    caption:
+      "Double century in ODI - new record holder 🏏🔥 #ShubmanGill #DoubleCentury",
+    song: "Badshah Theme",
+    gradient: "from-[#001015] via-[#001f2a] to-[#001018]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.60 0.18 200 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.60 0.18 200 / 0.13)",
+    likes: 560000,
+    comments: 42000,
+    shares: 145000,
+    views: 18500000,
+  },
+  {
+    id: 95,
+    username: "narendra.modi.official",
+    caption:
+      "G20 mein Bharat ki dhaak - Vishwaguru ki taraf badhte kadam 🌍🇮🇳 #G20India",
+    song: "Vande Mataram - Lata Mangeshkar",
+    gradient: "from-[#1a0800] via-[#3d1500] to-[#1a0500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.65 0.20 45 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.65 0.20 45 / 0.13)",
+    likes: 1300000,
+    comments: 97000,
+    shares: 395000,
+    views: 46000000,
+  },
+  {
+    id: 96,
+    username: "srk.king.khan",
+    caption: "Raees - villain bhi hero hota hai 🕶️🔥 #Raees #SRK #Bollywood",
+    song: "Zaalima - Raees",
+    gradient: "from-[#0d0018] via-[#1a0030] to-[#0d0020]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.50 0.22 295 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.50 0.22 295 / 0.13)",
+    likes: 940000,
+    comments: 70000,
+    shares: 265000,
+    views: 32000000,
+  },
+  {
+    id: 97,
+    username: "ms.dhoni7",
+    caption:
+      "World Cup 2011 winning six - har Hindustani ka sapna tha yeh 🏆🇮🇳 #Dhoni #WC2011",
+    song: "Ae Watan - Raazi",
+    gradient: "from-[#1a1500] via-[#352a00] to-[#1a1200]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.70 0.19 75 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.70 0.19 75 / 0.13)",
+    likes: 1500000,
+    comments: 115000,
+    shares: 490000,
+    views: 50000000,
+  },
+  {
+    id: 98,
+    username: "salman.bhai.official",
+    caption:
+      "Tere Naam - pehla pyaar nahi bhulta 💙 #TereNaam #Salman #Romantic",
+    song: "Tere Naam - Title Track",
+    gradient: "from-[#1a0000] via-[#330000] to-[#1a0000]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.22 15 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.22 15 / 0.13)",
+    likes: 1020000,
+    comments: 76000,
+    shares: 298000,
+    views: 36000000,
+  },
+  {
+    id: 99,
+    username: "virat.kohli18",
+    caption:
+      "Anushka ke saath world cup jeet ke ek alag hi khushi hai 💕🏆 #ViratAnushka",
+    song: "Tum Hi Ho - Aashiqui 2",
+    gradient: "from-[#000d1a] via-[#001530] to-[#000d25]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.20 230 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.20 230 / 0.13)",
+    likes: 1200000,
+    comments: 90000,
+    shares: 350000,
+    views: 43000000,
+  },
+  {
+    id: 100,
+    username: "pawan.singh.bhojpuri",
+    caption:
+      "Bhojpuri music industry ka baadshah - Pawan Singh 👑🎵 #PawanSingh #King",
+    song: "Bhojpuri King Anthem",
+    gradient: "from-[#001a00] via-[#003300] to-[#001500]",
+    accent:
+      "radial-gradient(ellipse 75% 70% at 50% 45%, oklch(0.55 0.18 145 / 0.55) 0%, transparent 68%)",
+    shimmer: "oklch(0.55 0.18 145 / 0.13)",
+    likes: 810000,
+    comments: 61000,
+    shares: 210000,
+    views: 28000000,
+  },
 ];
 
 // Assign mock ageHours for quality scoring
 const REEL_AGE_HOURS = [
   2, 5, 12, 24, 3, 48, 8, 6, 36, 72, 4, 18, 10, 14, 96, 7, 20, 30, 48, 9, 15,
-  25,
+  25, 2, 5, 12, 24, 3, 48, 8, 6, 36, 72, 4, 18, 10, 14, 96, 7, 20, 30, 48, 9,
+  15, 25, 2, 5, 12, 24, 3, 48, 8, 6, 36, 72, 4, 18, 10, 14, 96, 7, 20, 30, 48,
+  9, 15, 25, 2, 5, 12, 24, 3, 48, 8, 6, 36, 72, 4, 18, 10, 14, 96, 7, 20, 30,
+  48, 9, 15, 25, 2, 5, 12, 24, 3, 48, 8, 6, 36, 72, 4, 18,
 ];
 
 const SORTED_REELS = [...BASE_REELS]
@@ -908,7 +2067,7 @@ export default function ReelsPage() {
       className="h-full w-full overflow-y-scroll snap-y snap-mandatory bg-black"
       style={
         {
-          height: "calc(100svh - 60px - env(safe-area-inset-bottom, 0px))",
+          height: "100svh",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
         } as React.CSSProperties
@@ -934,7 +2093,7 @@ export default function ReelsPage() {
             data-feed-index={feedIndex}
             className="h-full w-full snap-start snap-always relative overflow-hidden"
             style={{
-              height: "calc(100svh - 60px - env(safe-area-inset-bottom, 0px))",
+              height: "100svh",
               flexShrink: 0,
             }}
           >
@@ -1239,13 +2398,13 @@ export default function ReelsPage() {
               }}
               className="absolute left-3 right-3 z-30 flex items-center gap-2.5 pointer-events-auto"
               style={{
-                bottom: "calc(68px + env(safe-area-inset-bottom, 0px))",
+                bottom: "calc(16px + env(safe-area-inset-bottom, 0px))",
               }}
               aria-label="Use this audio"
             >
               {/* Spinning vinyl disc */}
               <div
-                className="h-8 w-8 rounded-full flex-shrink-0 relative overflow-hidden border border-white/20"
+                className="h-7 w-7 rounded-full flex-shrink-0 relative overflow-hidden border border-white/20"
                 style={{
                   background:
                     "radial-gradient(circle at 30% 30%, #555 0%, #222 40%, #111 100%)",
@@ -1264,7 +2423,7 @@ export default function ReelsPage() {
               </div>
               <div className="overflow-hidden flex-1">
                 <p
-                  className="text-white/85 text-[12px] font-medium whitespace-nowrap"
+                  className="text-white/85 text-[11px] font-medium whitespace-nowrap"
                   style={{
                     animation: isPlaying
                       ? "marqueeScroll 8s linear infinite"
@@ -1279,7 +2438,12 @@ export default function ReelsPage() {
             </button>
 
             {/* Creator profile + Follow */}
-            <div className="absolute bottom-[140px] left-3 z-30 flex items-center gap-2 pointer-events-auto">
+            <div
+              className="absolute left-3 z-30 flex items-center gap-2 pointer-events-auto"
+              style={{
+                bottom: "calc(140px + env(safe-area-inset-bottom, 0px))",
+              }}
+            >
               <button
                 type="button"
                 onClick={(e) => {
@@ -2001,6 +3165,79 @@ export default function ReelsPage() {
         </AnimatePresence>
       </div>
 
+      {/* ── Reels Mini Bottom Nav ── */}
+      <nav
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          height: "calc(52px + env(safe-area-inset-bottom, 0px))",
+          background: "rgba(0,0,0,0.7)",
+          backdropFilter: "blur(10px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-around",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        {(
+          [
+            { icon: "home", label: "Home" },
+            { icon: "explore", label: "Explore" },
+            { icon: "reels", label: "Reels" },
+            { icon: "notifications", label: "Activity" },
+            { icon: "profile", label: "Profile" },
+          ] as const
+        ).map((item) => (
+          <button
+            key={item.icon}
+            type="button"
+            onClick={() =>
+              item.icon !== "reels" &&
+              window.dispatchEvent(
+                new CustomEvent("reels-nav-switch", {
+                  detail: { tab: item.icon },
+                }),
+              )
+            }
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              padding: "4px 12px",
+              color:
+                item.icon === "reels"
+                  ? "oklch(var(--primary))"
+                  : "rgba(255,255,255,0.55)",
+              background: "none",
+              border: "none",
+              cursor: item.icon === "reels" ? "default" : "pointer",
+            }}
+          >
+            {item.icon === "home" && <Home size={20} />}
+            {item.icon === "explore" && <Compass size={20} />}
+            {item.icon === "reels" && (
+              <Film size={20} style={{ color: "oklch(var(--primary))" }} />
+            )}
+            {item.icon === "notifications" && <Bell size={20} />}
+            {item.icon === "profile" && <User size={20} />}
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 500,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+              }}
+            >
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </nav>
       <style>{`
         @keyframes reelPulse {
           0%, 100% { opacity: 0.6; transform: scale(1); }

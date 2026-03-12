@@ -85,6 +85,206 @@ const STORIES = [
     statusText: "Rohit AI Tech — innovation never sleeps 💡",
     isOwn: false,
   },
+  {
+    id: 7,
+    username: "narendra.modi",
+    initials: "NM",
+    avatarGradient: "from-orange-500 via-amber-500 to-yellow-500",
+    statusText: "Mann Ki Baat - Desh ke vikas ki baat 🇮🇳",
+    isOwn: false,
+  },
+  {
+    id: 8,
+    username: "virat.kohli",
+    initials: "VK",
+    avatarGradient: "from-blue-600 via-blue-500 to-cyan-500",
+    statusText: "Century mood on 💯🏏 #Kohli18",
+    isOwn: false,
+  },
+  {
+    id: 9,
+    username: "rohit.sharma",
+    initials: "RS",
+    avatarGradient: "from-teal-600 via-cyan-500 to-blue-500",
+    statusText: "Hitman is here 🏏🔥 #Mumbai",
+    isOwn: false,
+  },
+  {
+    id: 10,
+    username: "ms.dhoni7",
+    initials: "MS",
+    avatarGradient: "from-yellow-500 via-amber-400 to-orange-400",
+    statusText: "Whistle Podu! 💛 CSK forever 🏆",
+    isOwn: false,
+  },
+  {
+    id: 11,
+    username: "pawan.singh",
+    initials: "PS",
+    avatarGradient: "from-green-600 via-emerald-500 to-teal-500",
+    statusText: "Bhojpuri ka superstar 🎵👑 #PawanSingh",
+    isOwn: false,
+  },
+  {
+    id: 12,
+    username: "nitish.kumar",
+    initials: "NK",
+    avatarGradient: "from-green-700 via-green-600 to-emerald-500",
+    statusText: "Bihar ka vikas jaari hai 🙏 #Bihar",
+    isOwn: false,
+  },
+  {
+    id: 13,
+    username: "srk.official",
+    initials: "SRK",
+    avatarGradient: "from-purple-700 via-violet-600 to-indigo-500",
+    statusText: "Naam toh suna hoga 😎✨ #KingKhan",
+    isOwn: false,
+  },
+  {
+    id: 14,
+    username: "salman.khan",
+    initials: "SK",
+    avatarGradient: "from-red-600 via-rose-500 to-pink-500",
+    statusText: "Bhai ka swag alag hi hai 💪🔥",
+    isOwn: false,
+  },
+  {
+    id: 15,
+    username: "akshay.kumar",
+    initials: "AK",
+    avatarGradient: "from-amber-600 via-orange-500 to-red-500",
+    statusText: "Desh ke liye kuch bhi 🇮🇳❤️ #AkshayKumar",
+    isOwn: false,
+  },
+  {
+    id: 16,
+    username: "hardik.pandya",
+    initials: "HP",
+    avatarGradient: "from-violet-600 via-purple-500 to-fuchsia-500",
+    statusText: "All-rounder on fire 🏏🔥 #IPL",
+    isOwn: false,
+  },
+  {
+    id: 17,
+    username: "khesari.lal",
+    initials: "KL",
+    avatarGradient: "from-lime-600 via-green-500 to-emerald-400",
+    statusText: "Naya gaana aa gaya 🎤🎵 #Bhojpuri",
+    isOwn: false,
+  },
+  {
+    id: 18,
+    username: "nirahua",
+    initials: "NR",
+    avatarGradient: "from-yellow-600 via-amber-500 to-orange-500",
+    statusText: "Hasate hasate rula diya 😂❤️ #Comedy",
+    isOwn: false,
+  },
+  {
+    id: 19,
+    username: "yogi.adityanath",
+    initials: "YA",
+    avatarGradient: "from-orange-600 via-red-500 to-rose-500",
+    statusText: "Jai Shri Ram 🚩 UP ke vikas ki kahani",
+    isOwn: false,
+  },
+  {
+    id: 20,
+    username: "shubman.gill",
+    initials: "SG",
+    avatarGradient: "from-sky-600 via-blue-500 to-indigo-500",
+    statusText: "Cover drive practice 🏏⚡ #YoungStar",
+    isOwn: false,
+  },
+  {
+    id: 21,
+    username: "jasprit.bumrah",
+    initials: "JB",
+    avatarGradient: "from-slate-600 via-gray-500 to-zinc-500",
+    statusText: "Yorker ready 🎯🔥 #Bumrah",
+    isOwn: false,
+  },
+  {
+    id: 22,
+    username: "deepika.padukone",
+    initials: "DP",
+    avatarGradient: "from-pink-600 via-rose-500 to-fuchsia-500",
+    statusText: "Pathaan ki jaan 💖✨ #Deepika",
+    isOwn: false,
+  },
+  {
+    id: 23,
+    username: "ranveer.singh",
+    initials: "RV",
+    avatarGradient: "from-yellow-500 via-orange-500 to-red-500",
+    statusText: "Energy unlimited 🔥💥 #Ranveer",
+    isOwn: false,
+  },
+  {
+    id: 24,
+    username: "amit.shah",
+    initials: "AS",
+    avatarGradient: "from-orange-700 via-orange-600 to-amber-500",
+    statusText: "Desh ki seva hi mera dharm 🇮🇳 #BJP",
+    isOwn: false,
+  },
+  {
+    id: 25,
+    username: "kapil.sharma",
+    initials: "KS",
+    avatarGradient: "from-cyan-600 via-sky-500 to-blue-500",
+    statusText: "Aaj Comedy Nights mein milte hain 😂🎤",
+    isOwn: false,
+  },
+  {
+    id: 26,
+    username: "sourav.ganguly",
+    initials: "SG",
+    avatarGradient: "from-blue-700 via-blue-600 to-cyan-500",
+    statusText: "Dada ka josh - Cricket India 🏏👑 #Dada",
+    isOwn: false,
+  },
+  {
+    id: 27,
+    username: "sachin.tendulkar",
+    initials: "ST",
+    avatarGradient: "from-blue-800 via-blue-700 to-blue-500",
+    statusText: "Cricket is my religion 🏏🙏 #SachinTendulkar",
+    isOwn: false,
+  },
+  {
+    id: 28,
+    username: "neha.kakkar",
+    initials: "NK",
+    avatarGradient: "from-fuchsia-600 via-pink-500 to-rose-400",
+    statusText: "Naya gaana record kar rahi hoon 🎵❤️ #NehaKakkar",
+    isOwn: false,
+  },
+  {
+    id: 29,
+    username: "yo.yo.honey.singh",
+    initials: "YY",
+    avatarGradient: "from-purple-800 via-violet-700 to-indigo-600",
+    statusText: "Blue Eyes - ab wapas aa gaye 😎🎤 #HoneySingh",
+    isOwn: false,
+  },
+  {
+    id: 30,
+    username: "badshah.rapper",
+    initials: "BD",
+    avatarGradient: "from-indigo-700 via-violet-600 to-purple-500",
+    statusText: "Kanta Laga wala badshah 👑🎵 #Badshah",
+    isOwn: false,
+  },
+  {
+    id: 31,
+    username: "dhanush.official",
+    initials: "DH",
+    avatarGradient: "from-emerald-700 via-teal-600 to-cyan-500",
+    statusText: "Kolaveri Di - still viral 🎵🔥 #Dhanush",
+    isOwn: false,
+  },
 ];
 
 const OTHER_STORIES = STORIES.filter((s) => !s.isOwn);
@@ -632,8 +832,21 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
     setStoryViewerOpen(false);
   };
 
+  // Listen for reels nav switch events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent<{ tab: string }>).detail?.tab;
+      if (tab) setActiveTab(tab as NavTab);
+    };
+    window.addEventListener("reels-nav-switch", handler);
+    return () => window.removeEventListener("reels-nav-switch", handler);
+  }, []);
+
   const isFullscreenOverlay =
-    activeTab === "camera" || activeTab === "dms" || activeTab === "live";
+    activeTab === "camera" ||
+    activeTab === "dms" ||
+    activeTab === "live" ||
+    activeTab === "reels";
 
   return (
     <div
@@ -682,10 +895,38 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
           const file = e.target.files?.[0];
           if (file) {
             const reader = new FileReader();
-            reader.onload = (ev) => {
-              const dataUrl = ev.target?.result as string;
+            reader.onload = async (ev) => {
+              const rawDataUrl = ev.target?.result as string;
               const isReel =
                 createType === "reel" || file.type.startsWith("video/");
+              // Compress images to avoid localStorage quota issues
+              let dataUrl = rawDataUrl;
+              if (!isReel) {
+                dataUrl = await new Promise<string>((resolve) => {
+                  const img = new Image();
+                  img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    let w = img.width;
+                    let h = img.height;
+                    const maxSize = 800;
+                    if (w > maxSize || h > maxSize) {
+                      if (w > h) {
+                        h = Math.round((h * maxSize) / w);
+                        w = maxSize;
+                      } else {
+                        w = Math.round((w * maxSize) / h);
+                        h = maxSize;
+                      }
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext("2d")!;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL("image/jpeg", 0.75));
+                  };
+                  img.src = rawDataUrl;
+                });
+              }
               const newPost = {
                 id: Date.now(),
                 username: "you",
@@ -710,7 +951,13 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
                 try {
                   localStorage.setItem("user_posts", JSON.stringify(updated));
                   window.dispatchEvent(new CustomEvent("userPostAdded"));
-                } catch {}
+                } catch {
+                  // Quota exceeded - remove oldest and retry
+                  const trimmed = updated.slice(0, updated.length - 1);
+                  try {
+                    localStorage.setItem("user_posts", JSON.stringify(trimmed));
+                  } catch {}
+                }
                 return updated;
               });
               setCreateSheetOpen(false);
@@ -890,7 +1137,6 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
         {/* ── Top Bar ── */}
         {!isFullscreenOverlay &&
           activeTab !== "profile" &&
-          activeTab !== "reels" &&
           activeTab !== "explore" &&
           activeTab !== "notifications" && (
             <header
@@ -946,17 +1192,7 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
 
         {/* ── Main Content ── */}
         {!isFullscreenOverlay &&
-          (activeTab === "reels" ? (
-            <div
-              className="fixed inset-x-0 top-0 z-30"
-              style={{
-                height:
-                  "calc(100svh - 60px - env(safe-area-inset-bottom, 0px))",
-              }}
-            >
-              <ReelsPage />
-            </div>
-          ) : activeTab === "profile" ? (
+          (activeTab === "profile" ? (
             <main
               className="flex-1 overflow-y-auto"
               style={{
@@ -1363,6 +1599,12 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
             </main>
           ))}
 
+        {/* ── Reels Fullscreen Overlay ── */}
+        {activeTab === "reels" && (
+          <div className="fixed inset-0 z-[45]">
+            <ReelsPage />
+          </div>
+        )}
         {/* ── Bottom Navigation ── */}
         {!isFullscreenOverlay && (
           <nav
@@ -1425,19 +1667,11 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
                 data-ocid="nav.reels.tab"
                 onClick={() => setActiveTab("reels")}
                 aria-label="Reels"
-                className={`flex flex-col items-center gap-0.5 px-3 py-1 transition-colors ${
-                  activeTab === "reels"
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={
+                  "flex flex-col items-center gap-0.5 px-3 py-1 transition-colors text-muted-foreground hover:text-foreground"
+                }
               >
-                <Film
-                  className={`h-[22px] w-[22px] ${
-                    activeTab === "reels"
-                      ? "fill-primary/15 stroke-primary"
-                      : ""
-                  }`}
-                />
+                <Film className={`h-[22px] w-[22px] ${""}`} />
                 <span className="text-[9px] font-medium tracking-wide uppercase">
                   Reels
                 </span>
