@@ -42,7 +42,7 @@ import {
 } from "lucide-react";
 import { BadgeCheck, Flag } from "lucide-react";
 import { motion } from "motion/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAdmin } from "../contexts/AdminContext";
 import { useWatchEarn } from "../contexts/WatchEarnContext";
@@ -191,6 +191,34 @@ export default function ProfilePage({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
+
+  // User-uploaded posts from localStorage
+  interface UserPost {
+    id: string | number;
+    image?: string;
+    mediaUrl?: string;
+    imageGradient?: string;
+    imageAccent?: string;
+    type?: string;
+    mediaType?: string;
+    isVideo?: boolean;
+  }
+  const loadUserPosts = (): UserPost[] => {
+    try {
+      const raw = localStorage.getItem("user_posts");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  };
+  const [userPosts, setUserPosts] = useState<UserPost[]>(loadUserPosts);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadUserPosts is stable
+  useEffect(() => {
+    const refresh = () => setUserPosts(loadUserPosts());
+    window.addEventListener("userPostAdded", refresh);
+    return () => window.removeEventListener("userPostAdded", refresh);
+  }, []);
 
   const getInitials = (name: string) =>
     name
@@ -1073,7 +1101,28 @@ export default function ProfilePage({
         transition={{ duration: 0.35, delay: 0.1 }}
         className="grid grid-cols-3 gap-[2px] mt-[2px]"
       >
-        {GRID_ITEMS.map((item, index) => (
+        {[
+          ...userPosts.map((post, idx) => ({
+            id: `up-${post.id ?? idx}`,
+            isVideo:
+              post.type === "reel" ||
+              post.mediaType === "reel" ||
+              post.isVideo === true,
+            imageUrl: post.image || post.mediaUrl || null,
+            gradient:
+              post.imageGradient || "from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a]",
+            accent:
+              post.imageAccent ||
+              "radial-gradient(ellipse 80% 60% at 50% 40%, oklch(0.55 0.2 280 / 0.5) 0%, transparent 70%)",
+          })),
+          ...GRID_ITEMS.map((item) => ({
+            id: item.id,
+            isVideo: item.isVideo,
+            imageUrl: null,
+            gradient: item.gradient,
+            accent: item.accent,
+          })),
+        ].map((item, index) => (
           <motion.div
             key={item.id}
             data-ocid={`profile.item.${index + 1}`}
@@ -1087,13 +1136,23 @@ export default function ProfilePage({
             className="relative overflow-hidden cursor-pointer active:opacity-80 transition-opacity"
             style={{ aspectRatio: "1/1" }}
           >
-            <div
-              className={`absolute inset-0 bg-gradient-to-br ${item.gradient}`}
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: item.accent }}
-            />
+            {item.imageUrl ? (
+              <img
+                src={item.imageUrl}
+                alt="Post"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <>
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${item.gradient}`}
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{ background: item.accent }}
+                />
+              </>
+            )}
             {item.isVideo && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="h-8 w-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">

@@ -1,5 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AdminProvider } from "./contexts/AdminContext";
 import { AntiFraudProvider } from "./contexts/AntiFraudContext";
 import { ModerationProvider } from "./contexts/ModerationContext";
@@ -33,6 +33,142 @@ export function getSession(): SessionData | null {
   } catch {
     return null;
   }
+}
+
+// Custom install prompt banner (Play Store style)
+function InstallBanner() {
+  const [show, setShow] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const deferredPrompt = useRef<any>(null); // eslint-disable-line
+
+  useEffect(() => {
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as { standalone?: boolean }).standalone === true;
+    if (isStandalone) return;
+
+    const dismissed = localStorage.getItem("install_dismissed");
+    if (dismissed) return;
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredPrompt.current = e;
+      setShow(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt.current) return;
+    setInstalling(true);
+    deferredPrompt.current.prompt();
+    const { outcome } = await deferredPrompt.current.userChoice;
+    if (outcome === "accepted") {
+      setShow(false);
+      localStorage.setItem("install_dismissed", "1");
+    }
+    deferredPrompt.current = null;
+    setInstalling(false);
+  };
+
+  const handleDismiss = () => {
+    setShow(false);
+    localStorage.setItem("install_dismissed", "1");
+  };
+
+  if (!show) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        bottom: 80,
+        left: 12,
+        right: 12,
+        zIndex: 99999,
+        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+        border: "1px solid rgba(6,182,212,0.3)",
+        borderRadius: 16,
+        padding: "14px 16px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(6,182,212,0.15)",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        fontFamily: "sans-serif",
+      }}
+      data-ocid="install_banner.panel"
+    >
+      <img
+        src="/assets/generated/rohit-ai-tech-icon.dim_512x512.png"
+        alt="icon"
+        style={{ width: 52, height: 52, borderRadius: 12, flexShrink: 0 }}
+      />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: 14,
+            marginBottom: 2,
+          }}
+        >
+          Rohit AI Tech
+        </div>
+        <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>
+          Install for the best experience
+        </div>
+        <div style={{ color: "#f59e0b", fontSize: 11, marginTop: 2 }}>
+          ★★★★★ <span style={{ color: "rgba(255,255,255,0.4)" }}>Free</span>
+        </div>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          flexShrink: 0,
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleInstall}
+          disabled={installing}
+          style={{
+            background: "linear-gradient(135deg, #01875f 0%, #00c278 100%)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 20,
+            padding: "8px 18px",
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: "pointer",
+            letterSpacing: 0.5,
+            boxShadow: "0 2px 8px rgba(1,135,95,0.4)",
+          }}
+          data-ocid="install_banner.primary_button"
+        >
+          {installing ? "Installing..." : "Install"}
+        </button>
+        <button
+          type="button"
+          onClick={handleDismiss}
+          style={{
+            background: "transparent",
+            color: "rgba(255,255,255,0.4)",
+            border: "none",
+            fontSize: 11,
+            cursor: "pointer",
+            padding: "2px 0",
+            textAlign: "center",
+          }}
+          data-ocid="install_banner.cancel_button"
+        >
+          Not now
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -158,11 +294,12 @@ export default function App() {
           <WatchEarnProvider>
             {showAdmin ? (
               <AdminPanel onBack={() => setShowAdmin(false)} />
-            ) : page === "feed" ? (
+            ) : page === "feed" && getSession() ? (
               <HomeFeed onOpenAdmin={() => setShowAdmin(true)} />
             ) : (
               <WelcomeScreen onGetStarted={handleLogin} />
             )}
+            <InstallBanner />
           </WatchEarnProvider>
         </ModerationProvider>
       </AntiFraudProvider>

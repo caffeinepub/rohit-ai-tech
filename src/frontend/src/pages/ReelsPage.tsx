@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SiInstagram, SiWhatsapp } from "react-icons/si";
+import { SiInstagram } from "react-icons/si";
 import { useAdmin } from "../contexts/AdminContext";
 import { useModeration } from "../contexts/ModerationContext";
 import { getQualityScore } from "../utils/monetizationEngine";
@@ -377,59 +377,6 @@ function shuffleReels<T>(arr: T[]): T[] {
 }
 
 // High-paying Interstitial Ads — revenue goes 100% to Admin Wallet
-const INTERSTITIAL_ADS = [
-  {
-    id: "int1",
-    brand: "Samsung Galaxy",
-    tagline: "Galaxy AI is here. The most powerful phone ever made.",
-    cta: "Explore Now",
-    emoji: "📱",
-    revenue: 8.5,
-    bg: "linear-gradient(160deg, #0a0a14 0%, #0d0d2e 50%, #050510 100%)",
-    accent:
-      "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(30,80,220,0.45) 0%, transparent 70%)",
-    ctaStyle: { background: "linear-gradient(135deg, #1428A0, #2563EB)" },
-  },
-  {
-    id: "int2",
-    brand: "Swiggy Instamart",
-    tagline: "Groceries in 10 minutes. No excuses.",
-    cta: "Order Now",
-    emoji: "🛒",
-    revenue: 6.0,
-    bg: "linear-gradient(160deg, #0f0800 0%, #1e0e00 50%, #0a0500 100%)",
-    accent:
-      "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(220,100,10,0.45) 0%, transparent 70%)",
-    ctaStyle: { background: "linear-gradient(135deg, #FC8019, #e55a00)" },
-  },
-  {
-    id: "int3",
-    brand: "Byju's",
-    tagline: "Learn anything. Anytime. Anywhere. Free trial today.",
-    cta: "Start Free",
-    emoji: "🎓",
-    revenue: 7.5,
-    bg: "linear-gradient(160deg, #00080a 0%, #001020 50%, #000810 100%)",
-    accent:
-      "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(10,140,220,0.45) 0%, transparent 70%)",
-    ctaStyle: { background: "linear-gradient(135deg, #0078C8, #00A3FF)" },
-  },
-  {
-    id: "int4",
-    brand: "MakeMyTrip",
-    tagline: "Flights at ₹999. Book before they're gone.",
-    cta: "Book Now",
-    emoji: "✈️",
-    revenue: 9.0,
-    bg: "linear-gradient(160deg, #060012 0%, #0d0025 50%, #06000f 100%)",
-    accent:
-      "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(180,40,220,0.4) 0%, transparent 70%)",
-    ctaStyle: { background: "linear-gradient(135deg, #C4006A, #E0006A)" },
-  },
-];
-
-const REELS_BEFORE_AD = 3; // show interstitial after every 3 reels
-const SKIP_DELAY_MS = 5000; // 5s before skip button appears
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -481,11 +428,6 @@ export default function ReelsPage() {
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
   const [_currentFeedIndex, setCurrentFeedIndex] = useState(0);
 
-  // Interstitial ad state
-  const [interstitialAd, setInterstitialAd] = useState<
-    (typeof INTERSTITIAL_ADS)[0] | null
-  >(null);
-  const [canSkip, setCanSkip] = useState(false);
   const [commentSheetReelIndex, setCommentSheetReelIndex] = useState<
     number | null
   >(null);
@@ -504,9 +446,6 @@ export default function ReelsPage() {
     author: string;
   } | null>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
-  const [skipCountdown, setSkipCountdown] = useState(5);
-  const adIndexRef = useRef(0);
-  const reelsViewedSinceAdRef = useRef(0);
   const watchedIndicesRef = useRef<Set<number>>(new Set());
 
   const playIconTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -516,7 +455,6 @@ export default function ReelsPage() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { getChannelStatus, getDeletionReason, getDeletionLabel } =
     useModeration();
-  const { recordAdImpression } = useAdmin();
 
   const showToast = useCallback((text: string) => {
     const id = ++toastCounterRef.current;
@@ -550,8 +488,11 @@ export default function ReelsPage() {
           )
           .map((item: Record<string, unknown>, index: number) => ({
             id: 900000 + index,
-            username: (item.username as string) || "you",
-            caption: (item.caption as string) || "",
+            username:
+              (item.username as string) ||
+              (item.displayName as string) ||
+              "you",
+            caption: (item.caption as string) || (item.text as string) || "",
             song: "Original Audio",
             gradient: "from-[#0a0a0a] via-[#111] to-[#0a0a0a]",
             accent: "linear-gradient(135deg,#6366f1,#ec4899)",
@@ -560,6 +501,13 @@ export default function ReelsPage() {
             comments: 0,
             shares: 0,
             views: (item.views as number) || 0,
+            mediaUrl:
+              (item.mediaUrl as string) ||
+              (item.src as string) ||
+              (item.url as string) ||
+              "",
+            thumbnail:
+              (item.thumbnail as string) || (item.coverImage as string) || "",
           }));
         if (userReels.length > 0) {
           setReels((prev) => {
@@ -614,21 +562,9 @@ export default function ReelsPage() {
               10,
             );
             setCurrentFeedIndex(idx);
-            // Track unique reel views and trigger interstitial
+            // Track unique reel views
             if (!watchedIndicesRef.current.has(idx)) {
               watchedIndicesRef.current.add(idx);
-              reelsViewedSinceAdRef.current += 1;
-              if (reelsViewedSinceAdRef.current >= REELS_BEFORE_AD) {
-                reelsViewedSinceAdRef.current = 0;
-                const ad =
-                  INTERSTITIAL_ADS[
-                    adIndexRef.current % INTERSTITIAL_ADS.length
-                  ];
-                adIndexRef.current += 1;
-                setInterstitialAd(ad);
-                setCanSkip(false);
-                setSkipCountdown(Math.ceil(SKIP_DELAY_MS / 1000));
-              }
             }
           }
         }
@@ -641,30 +577,6 @@ export default function ReelsPage() {
     }
     return () => observer.disconnect();
   }, [reels.length]);
-
-  // Skip countdown timer when interstitial is showing
-  useEffect(() => {
-    if (!interstitialAd) return;
-    const interval = setInterval(() => {
-      setSkipCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setCanSkip(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [interstitialAd]);
-
-  const closeInterstitial = useCallback(() => {
-    if (interstitialAd) {
-      recordAdImpression(interstitialAd.revenue);
-    }
-    setInterstitialAd(null);
-    setCanSkip(false);
-  }, [interstitialAd, recordAdImpression]);
 
   const toggleLike = useCallback((id: number) => {
     setLikedReels((prev) => {
@@ -881,18 +793,6 @@ export default function ReelsPage() {
     [showToast, closeShareSheet],
   );
 
-  const handleShareWhatsApp = useCallback(
-    (reel: Reel) => {
-      const url = `https://rohit-ai-tech.app/reel/${reel.id}`;
-      const msg = encodeURIComponent(
-        `${reel.caption}\n\nWatch on Rohit AI Tech: ${url}`,
-      );
-      window.open(`https://wa.me/?text=${msg}`, "_blank");
-      closeShareSheet();
-    },
-    [closeShareSheet],
-  );
-
   const handleShareInstagram = useCallback(() => {
     showToast("Opening Instagram…");
     closeShareSheet();
@@ -1008,141 +908,12 @@ export default function ReelsPage() {
       className="h-full w-full overflow-y-scroll snap-y snap-mandatory bg-black"
       style={
         {
-          height: "calc(100svh - 60px)",
+          height: "calc(100svh - 60px - env(safe-area-inset-bottom, 0px))",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
         } as React.CSSProperties
       }
     >
-      {/* ── INTERSTITIAL AD OVERLAY ── */}
-      <AnimatePresence>
-        {interstitialAd && (
-          <motion.div
-            key="interstitial"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            data-ocid="reels.interstitial_ad.modal"
-            className="fixed inset-0 z-[200] flex flex-col"
-            style={{ background: interstitialAd.bg }}
-          >
-            {/* Accent glow */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: interstitialAd.accent }}
-            />
-
-            {/* Top bar */}
-            <div className="relative z-10 flex items-center justify-between px-5 pt-12 pb-3">
-              <span
-                className="text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1 rounded-full"
-                style={{
-                  background: "rgba(255,255,255,0.10)",
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  color: "rgba(255,255,255,0.55)",
-                }}
-              >
-                Ad · Rohit AI Tech
-              </span>
-              {/* Skip / countdown button */}
-              {canSkip ? (
-                <button
-                  type="button"
-                  data-ocid="reels.interstitial_ad.close_button"
-                  onClick={closeInterstitial}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-semibold text-[13px] active:scale-95 transition-transform"
-                  style={{
-                    background: "rgba(255,255,255,0.18)",
-                    border: "1px solid rgba(255,255,255,0.3)",
-                  }}
-                >
-                  <X className="h-3.5 w-3.5" />
-                  Skip Ad
-                </button>
-              ) : (
-                <span
-                  className="px-4 py-1.5 rounded-full text-white/50 font-semibold text-[13px]"
-                  style={{
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                  }}
-                >
-                  Skip in {skipCountdown}s
-                </span>
-              )}
-            </div>
-
-            {/* Main content */}
-            <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 text-center">
-              <motion.div
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 320,
-                  damping: 20,
-                  delay: 0.1,
-                }}
-                className="text-8xl mb-8"
-              >
-                {interstitialAd.emoji}
-              </motion.div>
-              <motion.h1
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.18 }}
-                className="text-[32px] font-black mb-3 text-white"
-                style={{
-                  letterSpacing: "-0.025em",
-                  fontFamily: "'Bricolage Grotesque', 'Outfit', sans-serif",
-                }}
-              >
-                {interstitialAd.brand}
-              </motion.h1>
-              <motion.p
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.24 }}
-                className="text-[16px] text-white/65 leading-relaxed mb-10 max-w-[280px]"
-              >
-                {interstitialAd.tagline}
-              </motion.p>
-              <motion.button
-                type="button"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                onClick={(e) => e.stopPropagation()}
-                className="px-10 py-4 rounded-full font-bold text-[16px] text-white active:scale-95 transition-transform shadow-2xl"
-                style={interstitialAd.ctaStyle as React.CSSProperties}
-              >
-                {interstitialAd.cta}
-              </motion.button>
-            </div>
-
-            {/* Progress bar at bottom */}
-            <div className="relative z-10 px-6 pb-12">
-              <div className="h-[3px] w-full rounded-full bg-white/10 overflow-hidden">
-                <motion.div
-                  className="h-full bg-white/40 rounded-full"
-                  initial={{ width: "0%" }}
-                  animate={{
-                    width: canSkip
-                      ? "100%"
-                      : `${((5 - skipCountdown) / 5) * 100}%`,
-                  }}
-                  transition={{ duration: 0.9, ease: "linear" }}
-                />
-              </div>
-              <p className="text-center text-white/30 text-[11px] mt-2">
-                Full-screen advertisement
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {reels.map((reel, reelIndex) => {
         const feedIndex = reelIndex;
         const liked = likedReels.has(reel.id);
@@ -1162,7 +933,10 @@ export default function ReelsPage() {
             key={reel.id}
             data-feed-index={feedIndex}
             className="h-full w-full snap-start snap-always relative overflow-hidden"
-            style={{ height: "calc(100svh - 60px)", flexShrink: 0 }}
+            style={{
+              height: "calc(100svh - 60px - env(safe-area-inset-bottom, 0px))",
+              flexShrink: 0,
+            }}
           >
             {/* Gradient background */}
             <div
@@ -1318,7 +1092,12 @@ export default function ReelsPage() {
             </AnimatePresence>
 
             {/* Right vertical action bar */}
-            <div className="absolute right-3 bottom-[52px] z-30 flex flex-col items-center gap-5">
+            <div
+              className="absolute right-3 z-30 flex flex-col items-center gap-5"
+              style={{
+                bottom: "calc(52px + env(safe-area-inset-bottom, 0px))",
+              }}
+            >
               <div className="flex flex-col items-center gap-1">
                 <div className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
                   <Eye className="h-[22px] w-[22px] text-white/80" />
@@ -1448,38 +1227,6 @@ export default function ReelsPage() {
                   {formatCount(reel.shares)}
                 </span>
               </div>
-
-              {/* WhatsApp Share */}
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  type="button"
-                  data-ocid={`reels.whatsapp_button.${reelIndex + 1}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleShareWhatsApp(reel);
-                  }}
-                  aria-label="Share on WhatsApp"
-                  className="h-11 w-11 rounded-full backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
-                  style={{
-                    background: "rgba(37,211,102,0.25)",
-                    border: "1px solid rgba(37,211,102,0.4)",
-                  }}
-                >
-                  <svg
-                    className="h-6 w-6"
-                    viewBox="0 0 24 24"
-                    fill="#25d366"
-                    role="img"
-                    aria-label="WhatsApp"
-                  >
-                    <title>WhatsApp</title>
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                  </svg>
-                </button>
-                <span className="text-white text-[11px] font-semibold drop-shadow">
-                  WA
-                </span>
-              </div>
             </div>
 
             {/* ── VINYL MUSIC BAR ── */}
@@ -1490,7 +1237,10 @@ export default function ReelsPage() {
                 e.stopPropagation();
                 setAudioSheetReel(reel);
               }}
-              className="absolute bottom-[68px] left-3 right-3 z-30 flex items-center gap-2.5 pointer-events-auto"
+              className="absolute left-3 right-3 z-30 flex items-center gap-2.5 pointer-events-auto"
+              style={{
+                bottom: "calc(68px + env(safe-area-inset-bottom, 0px))",
+              }}
               aria-label="Use this audio"
             >
               {/* Spinning vinyl disc */}
@@ -1795,26 +1545,6 @@ export default function ReelsPage() {
                           </p>
                           <p className="text-white/45 text-[11px]">
                             Copy reel URL to clipboard
-                          </p>
-                        </div>
-                      </button>
-
-                      {/* WhatsApp */}
-                      <button
-                        type="button"
-                        data-ocid="reels.share_whatsapp_button.1"
-                        onClick={() => handleShareWhatsApp(reel)}
-                        className="flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-white/[0.06] hover:bg-white/10 active:bg-white/15 transition-colors"
-                      >
-                        <div className="h-10 w-10 rounded-full bg-[#25D366] flex items-center justify-center flex-shrink-0">
-                          <SiWhatsapp className="h-[20px] w-[20px] text-white" />
-                        </div>
-                        <div className="text-left">
-                          <p className="text-white font-semibold text-[14px]">
-                            Share to WhatsApp
-                          </p>
-                          <p className="text-white/45 text-[11px]">
-                            Send via WhatsApp
                           </p>
                         </div>
                       </button>

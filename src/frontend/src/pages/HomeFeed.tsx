@@ -548,6 +548,7 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
   const [createType, setCreateType] = useState<"post" | "reel">("post");
   const [uploadToast, setUploadToast] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const storyFileInputRef = useRef<HTMLInputElement>(null);
 
   // Swipe gesture tracking
   const touchStartX = useRef(0);
@@ -611,6 +612,11 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
   };
 
   const handleStoryTap = (storyId: number) => {
+    // "Your Story" (id=0) - open file picker to add story
+    if (storyId === 0) {
+      storyFileInputRef.current?.click();
+      return;
+    }
     const idx = OTHER_STORIES.findIndex((s) => s.id === storyId);
     if (idx === -1) return;
     setActiveStoryIndex(idx);
@@ -675,37 +681,87 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) {
-            const newPost = {
-              id: Date.now(),
-              username: "you",
-              displayName: "You",
-              initials: "ME",
-              avatarGradient: "from-cyan-400 via-teal-500 to-emerald-600",
-              timestamp: "Just now",
-              caption:
-                createType === "reel"
-                  ? "New Reel u{1F3AC}"
-                  : "New Post u{1F4F8}",
-              imageGradient: "from-[#001a2c] via-[#003366] to-[#001f3f]",
-              imageAccent:
-                "radial-gradient(ellipse 80% 50% at 50% 50%, oklch(0.65 0.18 220 / 0.5) 0%, transparent 70%)",
-              likes: 0,
-              comments: 0,
-              shares: 0,
-              ageHours: 0,
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              const dataUrl = ev.target?.result as string;
+              const isReel =
+                createType === "reel" || file.type.startsWith("video/");
+              const newPost = {
+                id: Date.now(),
+                username: "you",
+                displayName: "You",
+                initials: "ME",
+                avatarGradient: "from-cyan-400 via-teal-500 to-emerald-600",
+                timestamp: "Just now",
+                caption: isReel ? "New Reel 🎬" : "New Post 📸",
+                image: dataUrl,
+                imageGradient: "from-[#001a2c] via-[#003366] to-[#001f3f]",
+                imageAccent:
+                  "radial-gradient(ellipse 80% 50% at 50% 50%, oklch(0.65 0.18 220 / 0.5) 0%, transparent 70%)",
+                likes: 0,
+                comments: 0,
+                shares: 0,
+                ageHours: 0,
+                type: isReel ? "reel" : "post",
+                isVideo: isReel,
+              };
+              setUserPosts((prev) => {
+                const updated = [newPost, ...prev];
+                try {
+                  localStorage.setItem("user_posts", JSON.stringify(updated));
+                  window.dispatchEvent(new CustomEvent("userPostAdded"));
+                } catch {}
+                return updated;
+              });
+              setCreateSheetOpen(false);
+              setUploadToast(true);
+              setTimeout(() => setUploadToast(false), 3000);
             };
-            setUserPosts((prev) => {
-              const updated = [newPost, ...prev];
-              try {
-                localStorage.setItem("user_posts", JSON.stringify(updated));
-                window.dispatchEvent(new CustomEvent("userPostAdded"));
-              } catch {}
-              return updated;
-            });
+            reader.readAsDataURL(file);
+          } else {
+            setCreateSheetOpen(false);
           }
-          setCreateSheetOpen(false);
-          setUploadToast(true);
-          setTimeout(() => setUploadToast(false), 3000);
+          if (e.target) e.target.value = "";
+        }}
+      />
+
+      {/* Hidden file input for story upload */}
+      <input
+        ref={storyFileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              const dataUrl = ev.target?.result as string;
+              const story = {
+                id: Date.now(),
+                username: "me",
+                initials: "ME",
+                avatarGradient: "from-violet-500 via-fuchsia-500 to-pink-500",
+                statusText: "My Story",
+                isOwn: true,
+                imageUrl: dataUrl,
+                timestamp: Date.now(),
+              };
+              try {
+                const existing = JSON.parse(
+                  localStorage.getItem("rohit_stories") || "[]",
+                );
+                localStorage.setItem(
+                  "rohit_stories",
+                  JSON.stringify([story, ...existing]),
+                );
+              } catch {}
+              setUploadToast(true);
+              setTimeout(() => setUploadToast(false), 3000);
+            };
+            reader.readAsDataURL(file);
+          }
+          if (e.target) e.target.value = "";
         }}
       />
 
@@ -893,12 +949,20 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
           (activeTab === "reels" ? (
             <div
               className="fixed inset-x-0 top-0 z-30"
-              style={{ height: "calc(100svh - 60px)" }}
+              style={{
+                height:
+                  "calc(100svh - 60px - env(safe-area-inset-bottom, 0px))",
+              }}
             >
               <ReelsPage />
             </div>
           ) : activeTab === "profile" ? (
-            <main className="flex-1 pb-[60px] overflow-y-auto">
+            <main
+              className="flex-1 overflow-y-auto"
+              style={{
+                paddingBottom: "calc(60px + env(safe-area-inset-bottom, 0px))",
+              }}
+            >
               <ProfilePage
                 displayName={userDisplayName}
                 profilePhoto={userProfilePhoto}
@@ -914,15 +978,30 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
               />
             </main>
           ) : activeTab === "explore" ? (
-            <main className="flex-1 pb-[60px] overflow-y-auto">
+            <main
+              className="flex-1 overflow-y-auto"
+              style={{
+                paddingBottom: "calc(60px + env(safe-area-inset-bottom, 0px))",
+              }}
+            >
               <ExplorePage />
             </main>
           ) : activeTab === "notifications" ? (
-            <main className="flex-1 pb-[60px] overflow-y-auto">
+            <main
+              className="flex-1 overflow-y-auto"
+              style={{
+                paddingBottom: "calc(60px + env(safe-area-inset-bottom, 0px))",
+              }}
+            >
               <NotificationsPage />
             </main>
           ) : (
-            <main className="flex-1 pt-[54px] pb-[60px]">
+            <main
+              className="flex-1 pt-[54px]"
+              style={{
+                paddingBottom: "calc(60px + env(safe-area-inset-bottom, 0px))",
+              }}
+            >
               {/* ── Pinned Announcement ── */}
               {pinnedAnnouncement && !announcementDismissed && (
                 <div
@@ -1120,18 +1199,33 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
                         </button>
                       </div>
 
-                      {/* Full-bleed image (4:5 aspect) */}
+                      {/* Full-bleed image (4:5 aspect) - click to open Reels */}
+                      {/* biome-ignore lint/a11y/useKeyWithClickEvents: mobile tap-first interaction */}
                       <div
-                        className="w-full relative overflow-hidden"
+                        className="w-full relative overflow-hidden cursor-pointer"
                         style={{ aspectRatio: "4/5" }}
+                        data-ocid={`post.item.${index + 1}`}
+                        onClick={() => setActiveTab("reels")}
                       >
-                        <div
-                          className={`absolute inset-0 bg-gradient-to-br ${post.imageGradient}`}
-                        />
-                        <div
-                          className="absolute inset-0"
-                          style={{ background: post.imageAccent }}
-                        />
+                        {(post as Record<string, unknown>).image ? (
+                          <img
+                            src={
+                              (post as Record<string, unknown>).image as string
+                            }
+                            alt="Post"
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        ) : (
+                          <>
+                            <div
+                              className={`absolute inset-0 bg-gradient-to-br ${post.imageGradient}`}
+                            />
+                            <div
+                              className="absolute inset-0"
+                              style={{ background: post.imageAccent }}
+                            />
+                          </>
+                        )}
                         <div
                           className="absolute inset-0 opacity-[0.03]"
                           style={{
@@ -1274,6 +1368,10 @@ export default function HomeFeed({ onOpenAdmin }: { onOpenAdmin: () => void }) {
           <nav
             data-ocid="bottomnav.section"
             className="fixed bottom-0 z-40 w-full max-w-[480px] flex items-center justify-around border-t border-white/[0.06] bg-background/90 backdrop-blur-xl h-[60px]"
+            style={{
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
+              height: "calc(60px + env(safe-area-inset-bottom, 0px))",
+            }}
           >
             <button
               type="button"
