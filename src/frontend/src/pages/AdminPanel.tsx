@@ -14,6 +14,7 @@ import {
   ChevronUp,
   Clock,
   Compass,
+  CreditCard,
   DollarSign,
   Film,
   MessageCircle,
@@ -331,6 +332,46 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
     String(monetizationTargets.views),
   );
   const [autoPayout, setAutoPayout] = useState(true);
+  const [gatewayUpi, setGatewayUpi] = useState(() => {
+    try {
+      return (
+        JSON.parse(localStorage.getItem("rohit_admin_payment_gateway") || "{}")
+          .upi || ""
+      );
+    } catch {
+      return "";
+    }
+  });
+  const [gatewayAccount, setGatewayAccount] = useState(() => {
+    try {
+      return (
+        JSON.parse(localStorage.getItem("rohit_admin_payment_gateway") || "{}")
+          .account || ""
+      );
+    } catch {
+      return "";
+    }
+  });
+  const [gatewayIfsc, setGatewayIfsc] = useState(() => {
+    try {
+      return (
+        JSON.parse(localStorage.getItem("rohit_admin_payment_gateway") || "{}")
+          .ifsc || ""
+      );
+    } catch {
+      return "";
+    }
+  });
+  const [gatewayBankName, setGatewayBankName] = useState(() => {
+    try {
+      return (
+        JSON.parse(localStorage.getItem("rohit_admin_payment_gateway") || "{}")
+          .bankName || ""
+      );
+    } catch {
+      return "";
+    }
+  });
   const [standardSplit, setStandardSplit] = useState(50);
   const [bigCreatorSplit, setBigCreatorSplit] = useState(75);
   const [qualityBoost, setQualityBoost] = useState(true);
@@ -987,6 +1028,92 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                 </div>
               </div>
 
+              {/* ── Payment Gateway ── */}
+              <div
+                data-ocid="admin.payments.gateway.section"
+                className="rounded-xl p-4 space-y-3 mb-2"
+                style={{
+                  background: "rgba(59,130,246,0.07)",
+                  border: "1px solid rgba(59,130,246,0.2)",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <CreditCard className="h-4 w-4 text-blue-400" />
+                  <p className="text-[13px] font-bold text-blue-300">
+                    💳 Admin Payment Gateway
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[11px] text-white/50 mb-1 block">
+                      UPI ID
+                    </Label>
+                    <Input
+                      data-ocid="admin.payments.upi_id.input"
+                      placeholder="yourname@upi"
+                      value={gatewayUpi}
+                      onChange={(e) => setGatewayUpi(e.target.value)}
+                      className="bg-white/[0.06] border-white/10 text-sm h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[11px] text-white/50 mb-1 block">
+                      Bank Account No.
+                    </Label>
+                    <Input
+                      data-ocid="admin.payments.bank_account.input"
+                      placeholder="Account number"
+                      value={gatewayAccount}
+                      onChange={(e) => setGatewayAccount(e.target.value)}
+                      className="bg-white/[0.06] border-white/10 text-sm h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[11px] text-white/50 mb-1 block">
+                      IFSC Code
+                    </Label>
+                    <Input
+                      data-ocid="admin.payments.ifsc.input"
+                      placeholder="IFSC Code"
+                      value={gatewayIfsc}
+                      onChange={(e) => setGatewayIfsc(e.target.value)}
+                      className="bg-white/[0.06] border-white/10 text-sm h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[11px] text-white/50 mb-1 block">
+                      Bank Name
+                    </Label>
+                    <Input
+                      data-ocid="admin.payments.bank_name.input"
+                      placeholder="Bank Name"
+                      value={gatewayBankName}
+                      onChange={(e) => setGatewayBankName(e.target.value)}
+                      className="bg-white/[0.06] border-white/10 text-sm h-8"
+                    />
+                  </div>
+                </div>
+                <Button
+                  data-ocid="admin.payments.save_gateway.button"
+                  onClick={() => {
+                    const data = {
+                      upi: gatewayUpi,
+                      account: gatewayAccount,
+                      ifsc: gatewayIfsc,
+                      bankName: gatewayBankName,
+                    };
+                    localStorage.setItem(
+                      "rohit_admin_payment_gateway",
+                      JSON.stringify(data),
+                    );
+                    toast.success("Payment gateway details saved!");
+                  }}
+                  className="w-full h-8 text-[12px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white"
+                >
+                  Save Gateway Details
+                </Button>
+              </div>
+
               {/* Split settings */}
               <div className="grid grid-cols-2 gap-3">
                 <div
@@ -1041,6 +1168,21 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                     {bigCreatorSplit}% / {100 - bigCreatorSplit}%
                   </p>
                 </div>
+              </div>
+
+              {/* Current split info */}
+              <div
+                data-ocid="admin.payments.split_info.card"
+                className="rounded-xl p-3 text-center"
+                style={{
+                  background: "rgba(34,197,94,0.06)",
+                  border: "1px solid rgba(34,197,94,0.15)",
+                }}
+              >
+                <p className="text-[11px] text-emerald-300 font-semibold">
+                  Current Split: {standardSplit}% Creator /{" "}
+                  {100 - standardSplit}% Admin (Standard)
+                </p>
               </div>
 
               {/* Creators table */}

@@ -29,6 +29,7 @@ import {
   Camera,
   CheckCircle2,
   Clock,
+  Eye,
   Grid3x3,
   Lock,
   LogOut,
@@ -36,6 +37,8 @@ import {
   Settings2,
   Shield,
   Tag,
+  Users,
+  Wallet,
 } from "lucide-react";
 import { BadgeCheck, Flag } from "lucide-react";
 import { motion } from "motion/react";
@@ -519,6 +522,67 @@ export default function ProfilePage({
                 <p className="text-[11px] text-muted-foreground/60 pl-6">
                   Monetization Tracker
                 </p>
+              </div>
+
+              {/* ── Stat Cards ── */}
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {/* Total Real Views */}
+                <div
+                  data-ocid="profile.creator_dashboard.views_card"
+                  className="rounded-xl p-2.5 flex flex-col items-center gap-1"
+                  style={{
+                    background: "rgba(139,92,246,0.12)",
+                    border: "1px solid rgba(139,92,246,0.35)",
+                    boxShadow: "0 0 10px rgba(139,92,246,0.15)",
+                  }}
+                >
+                  <Eye className="h-4 w-4 text-purple-400" />
+                  <span className="text-[13px] font-black text-white leading-tight">
+                    847K
+                  </span>
+                  <span className="text-[9px] text-purple-300/70 text-center leading-tight">
+                    Total Real Views
+                  </span>
+                </div>
+                {/* Follower Count */}
+                <div
+                  data-ocid="profile.creator_dashboard.followers_card"
+                  className="rounded-xl p-2.5 flex flex-col items-center gap-1"
+                  style={{
+                    background: "rgba(34,197,94,0.10)",
+                    border: "1px solid rgba(34,197,94,0.30)",
+                    boxShadow: "0 0 10px rgba(34,197,94,0.12)",
+                  }}
+                >
+                  <Users className="h-4 w-4 text-emerald-400" />
+                  <span className="text-[13px] font-black text-white leading-tight">
+                    12.4K
+                  </span>
+                  <span className="text-[9px] text-emerald-300/70 text-center leading-tight">
+                    Follower Count
+                  </span>
+                </div>
+                {/* Monthly Earnings */}
+                <div
+                  data-ocid="profile.creator_dashboard.earnings_card"
+                  className="rounded-xl p-2.5 flex flex-col items-center gap-1"
+                  style={{
+                    background: "rgba(234,179,8,0.10)",
+                    border: "1px solid rgba(234,179,8,0.30)",
+                    boxShadow: "0 0 10px rgba(234,179,8,0.12)",
+                  }}
+                >
+                  <Wallet className="h-4 w-4 text-amber-400" />
+                  <span className="text-[13px] font-black text-white leading-tight">
+                    ₹423
+                  </span>
+                  <span className="text-[9px] text-amber-300/70 text-center leading-tight">
+                    Monthly Earnings
+                  </span>
+                  <span className="text-[8px] text-amber-200/40 text-center leading-tight">
+                    Payout: 21st
+                  </span>
+                </div>
               </div>
 
               {/* Followers Milestone */}
