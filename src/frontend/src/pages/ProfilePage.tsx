@@ -298,6 +298,10 @@ export default function ProfilePage({
   };
 
   // Creator Dashboard data
+  const [connectionModal, setConnectionModal] = useState<
+    "followers" | "following" | null
+  >(null);
+
   const followersGoal = monetizationTargets.followers;
   const followersCount = 12400;
   const followersProgress = Math.min(
@@ -400,23 +404,40 @@ export default function ProfilePage({
 
         {/* ── Stats Row ── */}
         <div className="w-full flex items-center justify-around mt-1">
-          {[
-            { label: "Posts", value: "42" },
-            { label: "Followers", value: "12.4k" },
-            { label: "Following", value: "389" },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="flex flex-col items-center gap-0.5"
-            >
-              <span className="text-[20px] font-black text-foreground leading-tight tracking-tight">
-                {stat.value}
-              </span>
-              <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
-                {stat.label}
-              </span>
-            </div>
-          ))}
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-[20px] font-black text-foreground leading-tight tracking-tight">
+              42
+            </span>
+            <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
+              Posts
+            </span>
+          </div>
+          <button
+            type="button"
+            data-ocid="profile.followers_button"
+            onClick={() => setConnectionModal("followers")}
+            className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform"
+          >
+            <span className="text-[20px] font-black text-foreground leading-tight tracking-tight">
+              12.4k
+            </span>
+            <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
+              Followers
+            </span>
+          </button>
+          <button
+            type="button"
+            data-ocid="profile.following_button"
+            onClick={() => setConnectionModal("following")}
+            className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform"
+          >
+            <span className="text-[20px] font-black text-foreground leading-tight tracking-tight">
+              389
+            </span>
+            <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
+              Following
+            </span>
+          </button>
         </div>
 
         {/* ── Edit Profile Button ── */}
@@ -1168,6 +1189,183 @@ export default function ProfilePage({
           </div>
         </SheetContent>
       </Sheet>
+      {/* ── FOLLOWERS / FOLLOWING MODAL ── */}
+      {connectionModal && (
+        <div
+          className="fixed inset-0 z-[200] flex flex-col justify-end"
+          role="presentation"
+          onClick={() => setConnectionModal(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setConnectionModal(null);
+          }}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative z-10 bg-[#111] rounded-t-3xl border-t border-white/10 max-h-[80vh] flex flex-col"
+            aria-label="Connections list"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
+              <h3 className="text-white font-bold text-[17px]">
+                {connectionModal === "followers" ? "Followers" : "Following"}
+              </h3>
+              <button
+                type="button"
+                data-ocid="profile.connection_modal.close_button"
+                onClick={() => setConnectionModal(null)}
+                className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center active:scale-90 transition-transform"
+              >
+                <span className="text-white/70 text-[16px]">✕</span>
+              </button>
+            </div>
+            {/* List */}
+            <div className="overflow-y-auto flex-1 pb-8">
+              {(connectionModal === "followers"
+                ? [
+                    {
+                      name: "Priya Sharma",
+                      handle: "@priya.sharma",
+                      color: "linear-gradient(135deg,#ec4899,#a855f7)",
+                    },
+                    {
+                      name: "Rahul Verma",
+                      handle: "@rahul.verma",
+                      color: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                    },
+                    {
+                      name: "Anjali Singh",
+                      handle: "@anjali.singh",
+                      color: "linear-gradient(135deg,#f59e0b,#ef4444)",
+                    },
+                    {
+                      name: "Vikram Patel",
+                      handle: "@vikram.patel",
+                      color: "linear-gradient(135deg,#10b981,#059669)",
+                    },
+                    {
+                      name: "Sneha Gupta",
+                      handle: "@sneha.gupta",
+                      color: "linear-gradient(135deg,#8b5cf6,#7c3aed)",
+                    },
+                    {
+                      name: "Amit Kumar",
+                      handle: "@amit.kumar",
+                      color: "linear-gradient(135deg,#f97316,#dc2626)",
+                    },
+                    {
+                      name: "Pooja Nair",
+                      handle: "@pooja.nair",
+                      color: "linear-gradient(135deg,#06b6d4,#3b82f6)",
+                    },
+                    {
+                      name: "Ravi Shankar",
+                      handle: "@ravi.shankar",
+                      color: "linear-gradient(135deg,#d946ef,#ec4899)",
+                    },
+                    {
+                      name: "Meera Joshi",
+                      handle: "@meera.joshi",
+                      color: "linear-gradient(135deg,#84cc16,#22c55e)",
+                    },
+                    {
+                      name: "Karan Mehta",
+                      handle: "@karan.mehta",
+                      color: "linear-gradient(135deg,#f43f5e,#e11d48)",
+                    },
+                    {
+                      name: "Divya Rao",
+                      handle: "@divya.rao",
+                      color: "linear-gradient(135deg,#fbbf24,#f59e0b)",
+                    },
+                    {
+                      name: "Suresh Babu",
+                      handle: "@suresh.babu",
+                      color: "linear-gradient(135deg,#60a5fa,#818cf8)",
+                    },
+                  ]
+                : [
+                    {
+                      name: "Mani Meraj",
+                      handle: "@mani.meraj.official",
+                      color: "linear-gradient(135deg,#f97316,#dc2626)",
+                    },
+                    {
+                      name: "Amit Bhadana",
+                      handle: "@amit.bhadana",
+                      color: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                    },
+                    {
+                      name: "Suraj Rokade",
+                      handle: "@suraj.rokade",
+                      color: "linear-gradient(135deg,#8b5cf6,#7c3aed)",
+                    },
+                    {
+                      name: "Faisu Official",
+                      handle: "@mr.faisu_07",
+                      color: "linear-gradient(135deg,#ec4899,#a855f7)",
+                    },
+                    {
+                      name: "Carry Minati",
+                      handle: "@carryminati",
+                      color: "linear-gradient(135deg,#ef4444,#b91c1c)",
+                    },
+                    {
+                      name: "Technical Guruji",
+                      handle: "@technicalguruji",
+                      color: "linear-gradient(135deg,#f59e0b,#d97706)",
+                    },
+                    {
+                      name: "BB Ki Vines",
+                      handle: "@bbkivines",
+                      color: "linear-gradient(135deg,#10b981,#059669)",
+                    },
+                    {
+                      name: "Ashish Chanchlani",
+                      handle: "@ashishchanchlani",
+                      color: "linear-gradient(135deg,#06b6d4,#0284c7)",
+                    },
+                  ]
+              ).map((person, i) => (
+                <div
+                  key={person.handle}
+                  data-ocid={`profile.connection_modal.item.${i + 1}`}
+                  className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.05]"
+                >
+                  <div
+                    className="h-11 w-11 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-[15px]"
+                    style={{ background: person.color }}
+                  >
+                    {person.name[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold text-[14px] truncate">
+                      {person.name}
+                    </p>
+                    <p className="text-white/45 text-[12px] truncate">
+                      {person.handle}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    data-ocid={`profile.connection_modal.follow_button.${i + 1}`}
+                    className="px-4 py-1.5 rounded-full text-[12px] font-semibold text-white border border-white/20 bg-white/[0.07] active:scale-95 transition-transform flex-shrink-0"
+                  >
+                    {connectionModal === "following"
+                      ? "Following"
+                      : "Follow Back"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

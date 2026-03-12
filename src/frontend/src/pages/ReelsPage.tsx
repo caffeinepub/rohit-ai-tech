@@ -440,6 +440,24 @@ function formatCount(n: number): string {
 type ToastMsg = { id: number; text: string };
 type Reel = (typeof BASE_REELS)[0];
 
+interface ReplyEntry {
+  id: string;
+  author: string;
+  text: string;
+  timestamp: number;
+  likes: number;
+  liked: boolean;
+}
+interface CommentEntry {
+  id: string;
+  author: string;
+  text: string;
+  timestamp: number;
+  likes: number;
+  liked: boolean;
+  replies: ReplyEntry[];
+}
+
 export default function ReelsPage() {
   const [reels, setReels] = useState<Reel[]>(() => {
     // Daily shuffle: check stored date
@@ -456,6 +474,9 @@ export default function ReelsPage() {
   const [playingIndex, setPlayingIndex] = useState<number | null>(0);
   const [showPlayIcon, setShowPlayIcon] = useState<number | null>(null);
   const [shareSheetIndex, setShareSheetIndex] = useState<number | null>(null);
+  const [audioSheetReel, setAudioSheetReel] = useState<Reel | null>(null);
+  const [doubleTapHeart, setDoubleTapHeart] = useState<number | null>(null);
+  const lastTapRef = useRef<{ index: number; time: number } | null>(null);
   const [storyToastIndex, setStoryToastIndex] = useState<number | null>(null);
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
   const [_currentFeedIndex, setCurrentFeedIndex] = useState(0);
@@ -465,6 +486,24 @@ export default function ReelsPage() {
     (typeof INTERSTITIAL_ADS)[0] | null
   >(null);
   const [canSkip, setCanSkip] = useState(false);
+  const [commentSheetReelIndex, setCommentSheetReelIndex] = useState<
+    number | null
+  >(null);
+  const [commentsByReel, setCommentsByReel] = useState<
+    Record<string, CommentEntry[]>
+  >(() => {
+    try {
+      return JSON.parse(localStorage.getItem("rohit_comments") || "{}");
+    } catch {
+      return {};
+    }
+  });
+  const [commentText, setCommentText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<{
+    commentId: string;
+    author: string;
+  } | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
   const [skipCountdown, setSkipCountdown] = useState(5);
   const adIndexRef = useRef(0);
   const reelsViewedSinceAdRef = useRef(0);
@@ -636,18 +675,199 @@ export default function ReelsPage() {
     });
   }, []);
 
-  const handleReelTap = useCallback((index: number) => {
-    setPlayingIndex((prev) => (prev === index ? null : index));
-    setShowPlayIcon(index);
-    if (playIconTimerRef.current) clearTimeout(playIconTimerRef.current);
-    playIconTimerRef.current = setTimeout(() => setShowPlayIcon(null), 800);
-  }, []);
+  const handleReelTap = useCallback(
+    (index: number) => {
+      const now = Date.now();
+      const last = lastTapRef.current;
+      if (last && last.index === index && now - last.time < 300) {
+        // Double tap detected
+        lastTapRef.current = null;
+        setDoubleTapHeart(index);
+        // Also auto-like
+        setLikedReels((prev) => {
+          const next = new Set(prev);
+          next.add(reels[index]?.id ?? index);
+          return next;
+        });
+        setTimeout(() => setDoubleTapHeart(null), 900);
+      } else {
+        lastTapRef.current = { index, time: now };
+        setPlayingIndex((prev) => (prev === index ? null : index));
+        setShowPlayIcon(index);
+        if (playIconTimerRef.current) clearTimeout(playIconTimerRef.current);
+        playIconTimerRef.current = setTimeout(() => setShowPlayIcon(null), 800);
+      }
+    },
+    [reels],
+  );
 
   const openShareSheet = useCallback(
     (index: number) => setShareSheetIndex(index),
     [],
   );
   const closeShareSheet = useCallback(() => setShareSheetIndex(null), []);
+
+  // ── COMMENT HELPERS ──
+  const MOCK_NAMES = [
+    "Priya",
+    "Rahul",
+    "Anjali",
+    "Vikram",
+    "Sneha",
+    "Amit",
+    "Neha",
+    "Rohan",
+  ];
+  const MOCK_COMMENTS = [
+    "Bhai yeh scene too good hai 😂🔥",
+    "Ekdum mast content! Keep it up 🙌",
+    "@priya.sharma dekh yaar kitna funny hai 😭",
+    "Bhai teri comedy ne toh dil jeet liya ❤️",
+    "Arey wah! Ek number tha yeh 🤣🤣",
+    "Yeh toh pura viral hona chahiye! 🔥",
+    "Ab aur kya chahiye zindagi se 😂",
+    "Legend hai bhai tu 🫡",
+  ];
+
+  const seedComments = (reelId: number): CommentEntry[] => {
+    const seed = reelId % 8;
+    return Array.from({ length: 3 + (reelId % 3) }, (_, i) => {
+      const nameIdx = (seed + i * 3) % MOCK_NAMES.length;
+      const textIdx = (seed + i * 2) % MOCK_COMMENTS.length;
+      return {
+        id: `seed-${reelId}-${i}`,
+        author: MOCK_NAMES[nameIdx],
+        text: MOCK_COMMENTS[textIdx],
+        timestamp: Date.now() - (i + 1) * 3600000,
+        likes: 10 + ((reelId * 7 + i * 13) % 500),
+        liked: false,
+        replies:
+          i === 0
+            ? [
+                {
+                  id: `seed-${reelId}-r0`,
+                  author: MOCK_NAMES[(nameIdx + 2) % MOCK_NAMES.length],
+                  text: "Hahaha sahi bola yaar! 😂",
+                  timestamp: Date.now() - i * 1800000,
+                  likes: 5,
+                  liked: false,
+                },
+              ]
+            : [],
+      };
+    });
+  };
+
+  const getCommentsForReel = (reelId: number): CommentEntry[] => {
+    const key = String(reelId);
+    if (commentsByReel[key]) return commentsByReel[key];
+    return seedComments(reelId);
+  };
+
+  const saveComments = (reelId: number, comments: CommentEntry[]) => {
+    const updated = { ...commentsByReel, [String(reelId)]: comments };
+    setCommentsByReel(updated);
+    try {
+      localStorage.setItem("rohit_comments", JSON.stringify(updated));
+    } catch {}
+  };
+
+  const handleAddComment = (reelId: number) => {
+    const text = commentText.trim();
+    if (!text) return;
+    const session = JSON.parse(localStorage.getItem("rohit_session") || "{}");
+    const author = session.name || "You";
+    const current = getCommentsForReel(reelId);
+    if (replyingTo) {
+      const updated = current.map((c) =>
+        c.id === replyingTo.commentId
+          ? {
+              ...c,
+              replies: [
+                ...c.replies,
+                {
+                  id: `r-${Date.now()}`,
+                  author,
+                  text,
+                  timestamp: Date.now(),
+                  likes: 0,
+                  liked: false,
+                },
+              ],
+            }
+          : c,
+      );
+      saveComments(reelId, updated);
+    } else {
+      const newComment: CommentEntry = {
+        id: `c-${Date.now()}`,
+        author,
+        text,
+        timestamp: Date.now(),
+        likes: 0,
+        liked: false,
+        replies: [],
+      };
+      saveComments(reelId, [newComment, ...current]);
+    }
+    setCommentText("");
+    setReplyingTo(null);
+  };
+
+  const handleLikeComment = (
+    reelId: number,
+    commentId: string,
+    isReply?: boolean,
+    parentId?: string,
+  ) => {
+    const current = getCommentsForReel(reelId);
+    const updated = current.map((c) => {
+      if (isReply && c.id === parentId) {
+        return {
+          ...c,
+          replies: c.replies.map((r) =>
+            r.id === commentId
+              ? {
+                  ...r,
+                  liked: !r.liked,
+                  likes: r.liked ? r.likes - 1 : r.likes + 1,
+                }
+              : r,
+          ),
+        };
+      }
+      if (!isReply && c.id === commentId)
+        return {
+          ...c,
+          liked: !c.liked,
+          likes: c.liked ? c.likes - 1 : c.likes + 1,
+        };
+      return c;
+    });
+    saveComments(reelId, updated);
+  };
+
+  const formatTimeAgo = (ts: number) => {
+    const diff = (Date.now() - ts) / 1000;
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  const renderMentions = (text: string) => {
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, i) => {
+      const k = `m-${part}-${i}`;
+      return part.startsWith("@") ? (
+        <span key={k} className="text-purple-400 font-semibold">
+          {part}
+        </span>
+      ) : (
+        <span key={k}>{part}</span>
+      );
+    });
+  };
 
   const handleCopyLink = useCallback(
     (reel: Reel) => {
@@ -1082,6 +1302,21 @@ export default function ReelsPage() {
               )}
             </AnimatePresence>
 
+            {/* Double-tap heart animation */}
+            <AnimatePresence>
+              {doubleTapHeart === reelIndex && (
+                <motion.div
+                  key="double-tap-heart"
+                  initial={{ scale: 0, opacity: 1 }}
+                  animate={{ scale: [0, 1.3, 1, 0], opacity: [1, 1, 1, 0] }}
+                  transition={{ duration: 0.8, times: [0, 0.3, 0.6, 1] }}
+                  className="absolute inset-0 z-25 flex items-center justify-center pointer-events-none"
+                >
+                  <Heart className="h-24 w-24 fill-red-500 text-red-500 drop-shadow-2xl" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Right vertical action bar */}
             <div className="absolute right-3 bottom-[55px] z-30 flex flex-col items-center gap-5">
               <div className="flex flex-col items-center gap-1">
@@ -1170,7 +1405,10 @@ export default function ReelsPage() {
                 <button
                   type="button"
                   data-ocid={`reels.comment_button.${reelIndex + 1}`}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCommentSheetReelIndex(reelIndex);
+                  }}
                   aria-label="Comment"
                   className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
                 >
@@ -1188,7 +1426,18 @@ export default function ReelsPage() {
                   data-ocid={`reels.share_button.${reelIndex + 1}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    openShareSheet(reelIndex);
+                    const shareUrl = `https://rohit-ai-tech.app/reel/${reel.id}`;
+                    if (navigator.share) {
+                      navigator
+                        .share({
+                          title: "Rohit AI Tech",
+                          text: reel.caption,
+                          url: shareUrl,
+                        })
+                        .catch(() => {});
+                    } else {
+                      openShareSheet(reelIndex);
+                    }
                   }}
                   aria-label="Share"
                   className="h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
@@ -1199,18 +1448,53 @@ export default function ReelsPage() {
                   {formatCount(reel.shares)}
                 </span>
               </div>
+            </div>
 
-              {/* Music disc */}
+            {/* ── VINYL MUSIC BAR ── */}
+            <button
+              type="button"
+              data-ocid={`reels.music_bar.${reelIndex + 1}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setAudioSheetReel(reel);
+              }}
+              className="absolute bottom-[68px] left-3 right-3 z-30 flex items-center gap-2.5 pointer-events-auto"
+              aria-label="Use this audio"
+            >
+              {/* Spinning vinyl disc */}
               <div
-                className="h-11 w-11 rounded-full border-2 border-white/30 overflow-hidden flex items-center justify-center"
+                className="h-8 w-8 rounded-full flex-shrink-0 relative overflow-hidden border border-white/20"
                 style={{
-                  background: reel.accent,
-                  animation: isPlaying ? "spin 8s linear infinite" : "none",
+                  background:
+                    "radial-gradient(circle at 30% 30%, #555 0%, #222 40%, #111 100%)",
+                  animation: isPlaying ? "spin 4s linear infinite" : "none",
                 }}
               >
-                <div className="h-3 w-3 rounded-full bg-white/80" />
+                <div
+                  className="absolute inset-[6px] rounded-full border border-white/10"
+                  style={{ background: "#1a1a1a" }}
+                />
+                <div
+                  className="absolute inset-[10px] rounded-full"
+                  style={{ background: "#0a0a0a" }}
+                />
+                <div className="absolute inset-[12px] rounded-full bg-white/20" />
               </div>
-            </div>
+              <div className="overflow-hidden flex-1">
+                <p
+                  className="text-white/85 text-[12px] font-medium whitespace-nowrap"
+                  style={{
+                    animation: isPlaying
+                      ? "marqueeScroll 8s linear infinite"
+                      : "none",
+                    display: "inline-block",
+                  }}
+                >
+                  🎵 {reel.song} &nbsp;&nbsp;&nbsp; {reel.song}{" "}
+                  &nbsp;&nbsp;&nbsp;
+                </p>
+              </div>
+            </button>
 
             {/* Creator profile + Follow */}
             <div className="absolute bottom-[140px] left-3 z-30 flex items-center gap-2 pointer-events-auto">
@@ -1272,28 +1556,6 @@ export default function ReelsPage() {
                 <p className="text-white/85 text-[13px] leading-snug drop-shadow mb-3">
                   {reel.caption}
                 </p>
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <Music2
-                    className="h-[14px] w-[14px] text-white flex-shrink-0"
-                    style={{
-                      animation: isPlaying ? "spin 3s linear infinite" : "none",
-                    }}
-                  />
-                  <div className="overflow-hidden flex-1">
-                    <p
-                      className="text-white/80 text-[12px] font-medium whitespace-nowrap"
-                      style={{
-                        animation: isPlaying
-                          ? "marqueeScroll 8s linear infinite"
-                          : "none",
-                        display: "inline-block",
-                      }}
-                    >
-                      {reel.song} &nbsp;&nbsp;&nbsp; {reel.song}{" "}
-                      &nbsp;&nbsp;&nbsp;
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -1417,6 +1679,65 @@ export default function ReelsPage() {
                       </button>
                     </div>
 
+                    {/* ── SEND TO USERS ── */}
+                    <div className="px-5 mb-4">
+                      <p className="text-white/60 text-[11px] font-semibold uppercase tracking-widest mb-3">
+                        Send to
+                      </p>
+                      <div
+                        className="flex gap-4 overflow-x-auto pb-1"
+                        style={{ scrollbarWidth: "none" }}
+                      >
+                        {[
+                          {
+                            name: "Priya",
+                            color: "linear-gradient(135deg,#ec4899,#a855f7)",
+                          },
+                          {
+                            name: "Rahul",
+                            color: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                          },
+                          {
+                            name: "Anjali",
+                            color: "linear-gradient(135deg,#f59e0b,#ef4444)",
+                          },
+                          {
+                            name: "Vikram",
+                            color: "linear-gradient(135deg,#10b981,#059669)",
+                          },
+                          {
+                            name: "Sneha",
+                            color: "linear-gradient(135deg,#8b5cf6,#7c3aed)",
+                          },
+                          {
+                            name: "Amit",
+                            color: "linear-gradient(135deg,#f97316,#dc2626)",
+                          },
+                        ].map((user) => (
+                          <button
+                            key={user.name}
+                            type="button"
+                            data-ocid="reels.share_send_to.button"
+                            onClick={() => {
+                              showToast(`Reel sent to ${user.name}!`);
+                              closeShareSheet();
+                            }}
+                            className="flex flex-col items-center gap-1.5 flex-shrink-0 active:scale-95 transition-transform"
+                          >
+                            <div
+                              className="h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-[15px] border-2 border-white/15"
+                              style={{ background: user.color }}
+                            >
+                              {user.name[0]}
+                            </div>
+                            <span className="text-white/70 text-[11px] font-medium">
+                              {user.name}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Caption preview */}
                     <div className="mx-5 mb-4 px-3 py-2 rounded-xl bg-white/5 border border-white/8">
                       <p className="text-white/60 text-[12px] leading-snug line-clamp-2">
@@ -1522,8 +1843,381 @@ export default function ReelsPage() {
         );
       })}
 
+      {/* ── COMMENT THREAD SHEET ── */}
+      <AnimatePresence>
+        {commentSheetReelIndex !== null &&
+          (() => {
+            const activeReel = reels[commentSheetReelIndex];
+            if (!activeReel) return null;
+            const comments = getCommentsForReel(activeReel.id);
+            return (
+              <>
+                {/* Backdrop */}
+                <motion.div
+                  key="comment-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-[2px]"
+                  onClick={() => {
+                    setCommentSheetReelIndex(null);
+                    setReplyingTo(null);
+                  }}
+                />
+                {/* Sheet */}
+                <motion.div
+                  key="comment-sheet"
+                  data-ocid="reels.comment_sheet.1"
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", stiffness: 340, damping: 32 }}
+                  className="fixed bottom-0 left-0 right-0 z-[80] flex flex-col rounded-t-3xl bg-[#111] border-t border-white/10"
+                  style={{ height: "75svh", maxHeight: "75svh" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Handle bar */}
+                  <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+                    <div className="w-10 h-1 rounded-full bg-white/20" />
+                  </div>
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-5 py-3 flex-shrink-0 border-b border-white/8">
+                    <div className="w-8" />
+                    <h3 className="text-white font-bold text-[16px] tracking-wide">
+                      Comments
+                    </h3>
+                    <button
+                      type="button"
+                      data-ocid="reels.comment_sheet_close_button"
+                      onClick={() => {
+                        setCommentSheetReelIndex(null);
+                        setReplyingTo(null);
+                        setCommentText("");
+                      }}
+                      aria-label="Close comments"
+                      className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center active:scale-90 transition-transform"
+                    >
+                      <X className="h-4 w-4 text-white/70" />
+                    </button>
+                  </div>
+
+                  {/* Comments List */}
+                  <div
+                    className="flex-1 overflow-y-auto px-4 py-3"
+                    style={{ overscrollBehavior: "contain" }}
+                  >
+                    {comments.length === 0 && (
+                      <div
+                        data-ocid="reels.comments_empty_state"
+                        className="flex flex-col items-center justify-center h-full gap-3 text-white/40"
+                      >
+                        <MessageCircle className="h-12 w-12 opacity-30" />
+                        <p className="text-sm">No comments yet. Be first!</p>
+                      </div>
+                    )}
+                    {comments.map((comment, ci) => (
+                      <div
+                        key={comment.id}
+                        data-ocid={`reels.comment.item.${ci + 1}`}
+                        className="mb-4"
+                      >
+                        {/* Comment row */}
+                        <div className="flex items-start gap-3">
+                          {/* Avatar */}
+                          <div
+                            className="h-8 w-8 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-[13px] border border-white/10"
+                            style={{
+                              background: `linear-gradient(135deg, hsl(${(comment.author.charCodeAt(0) * 5) % 360},70%,45%), hsl(${(comment.author.charCodeAt(0) * 5 + 120) % 360},70%,35%))`,
+                            }}
+                          >
+                            {comment.author[0]}
+                          </div>
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <span className="text-white font-semibold text-[13px] mr-1.5">
+                                  {comment.author}
+                                </span>
+                                <span className="text-white/80 text-[13px] leading-snug">
+                                  {renderMentions(comment.text)}
+                                </span>
+                              </div>
+                              {/* Like */}
+                              <button
+                                type="button"
+                                data-ocid={`reels.comment_like_button.${ci + 1}`}
+                                onClick={() =>
+                                  handleLikeComment(activeReel.id, comment.id)
+                                }
+                                className="flex flex-col items-center gap-0.5 ml-1 flex-shrink-0 active:scale-90 transition-transform"
+                              >
+                                <Heart
+                                  className="h-4 w-4"
+                                  style={{
+                                    color: comment.liked
+                                      ? "#ff3040"
+                                      : "rgba(255,255,255,0.4)",
+                                    fill: comment.liked ? "#ff3040" : "none",
+                                  }}
+                                />
+                                {comment.likes > 0 && (
+                                  <span className="text-white/40 text-[10px]">
+                                    {comment.likes}
+                                  </span>
+                                )}
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-white/35 text-[11px]">
+                                {formatTimeAgo(comment.timestamp)}
+                              </span>
+                              <button
+                                type="button"
+                                data-ocid={`reels.comment_reply_button.${ci + 1}`}
+                                onClick={() => {
+                                  setReplyingTo({
+                                    commentId: comment.id,
+                                    author: comment.author,
+                                  });
+                                  setCommentText(`@${comment.author} `);
+                                  commentInputRef.current?.focus();
+                                }}
+                                className="text-white/45 text-[11px] font-semibold hover:text-white/70 transition-colors"
+                              >
+                                Reply
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Nested Replies */}
+                        {comment.replies.length > 0 && (
+                          <div className="ml-11 mt-2 flex flex-col gap-3">
+                            {comment.replies.map((reply, ri) => (
+                              <div
+                                key={reply.id}
+                                data-ocid={`reels.reply.item.${ri + 1}`}
+                                className="flex items-start gap-2.5"
+                              >
+                                <div
+                                  className="h-6 w-6 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-[10px] border border-white/10"
+                                  style={{
+                                    background: `linear-gradient(135deg, hsl(${(reply.author.charCodeAt(0) * 5) % 360},70%,45%), hsl(${(reply.author.charCodeAt(0) * 5 + 120) % 360},70%,35%))`,
+                                  }}
+                                >
+                                  {reply.author[0]}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1">
+                                      <span className="text-white font-semibold text-[12px] mr-1.5">
+                                        {reply.author}
+                                      </span>
+                                      <span className="text-white/75 text-[12px] leading-snug">
+                                        {renderMentions(reply.text)}
+                                      </span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      data-ocid={`reels.reply_like_button.${ri + 1}`}
+                                      onClick={() =>
+                                        handleLikeComment(
+                                          activeReel.id,
+                                          reply.id,
+                                          true,
+                                          comment.id,
+                                        )
+                                      }
+                                      className="flex flex-col items-center gap-0.5 ml-1 flex-shrink-0 active:scale-90 transition-transform"
+                                    >
+                                      <Heart
+                                        className="h-3 w-3"
+                                        style={{
+                                          color: reply.liked
+                                            ? "#ff3040"
+                                            : "rgba(255,255,255,0.4)",
+                                          fill: reply.liked
+                                            ? "#ff3040"
+                                            : "none",
+                                        }}
+                                      />
+                                      {reply.likes > 0 && (
+                                        <span className="text-white/40 text-[10px]">
+                                          {reply.likes}
+                                        </span>
+                                      )}
+                                    </button>
+                                  </div>
+                                  <span className="text-white/35 text-[11px]">
+                                    {formatTimeAgo(reply.timestamp)}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Input bar */}
+                  <div className="flex-shrink-0 border-t border-white/8 px-4 py-3 pb-safe">
+                    {replyingTo && (
+                      <div className="flex items-center justify-between mb-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/8">
+                        <span className="text-white/55 text-[12px]">
+                          Replying to{" "}
+                          <span className="text-purple-400 font-semibold">
+                            @{replyingTo.author}
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyingTo(null);
+                            setCommentText("");
+                          }}
+                          className="text-white/40 hover:text-white/70"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <input
+                        ref={commentInputRef}
+                        type="text"
+                        data-ocid="reels.comment_input"
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter")
+                            handleAddComment(activeReel.id);
+                        }}
+                        placeholder="Add a comment... @tag someone"
+                        className="flex-1 bg-white/8 rounded-2xl px-4 py-2.5 text-white text-[14px] placeholder-white/35 outline-none border border-white/10 focus:border-white/25 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        data-ocid="reels.comment_send_button"
+                        onClick={() => handleAddComment(activeReel.id)}
+                        disabled={!commentText.trim()}
+                        className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center active:scale-90 transition-transform disabled:opacity-40"
+                        aria-label="Send comment"
+                      >
+                        <Send className="h-[18px] w-[18px] text-white" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            );
+          })()}
+      </AnimatePresence>
+
       {/* Infinite scroll sentinel */}
       <div ref={sentinelRef} className="h-1 w-full" />
+
+      {/* ── USE THIS AUDIO SHEET ── */}
+      <AnimatePresence>
+        {audioSheetReel && (
+          <>
+            <motion.div
+              key="audio-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-[2px]"
+              onClick={() => setAudioSheetReel(null)}
+            />
+            <motion.div
+              key="audio-sheet"
+              data-ocid="reels.audio_sheet.panel"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 340, damping: 30 }}
+              className="fixed bottom-0 left-0 right-0 z-[160] rounded-t-3xl bg-[#111] border-t border-white/10 pb-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-white/20" />
+              </div>
+              <div className="flex items-center justify-between px-5 py-3">
+                <h3 className="text-white font-bold text-[16px]">
+                  Use this Audio
+                </h3>
+                <button
+                  type="button"
+                  data-ocid="reels.audio_sheet.close_button"
+                  onClick={() => setAudioSheetReel(null)}
+                  className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center active:scale-90 transition-transform"
+                >
+                  <X className="h-4 w-4 text-white/70" />
+                </button>
+              </div>
+              {/* Song info */}
+              <div className="mx-5 mb-6 flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.06] border border-white/10">
+                <div
+                  className="h-12 w-12 rounded-full flex-shrink-0 relative"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 30% 30%, #555 0%, #222 40%, #111 100%)",
+                    animation: "spin 4s linear infinite",
+                  }}
+                >
+                  <div
+                    className="absolute inset-[5px] rounded-full border border-white/10"
+                    style={{ background: "#1a1a1a" }}
+                  />
+                  <div className="absolute inset-[9px] rounded-full bg-white/20" />
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-[14px]">
+                    {audioSheetReel.song}
+                  </p>
+                  <p className="text-white/50 text-[11px]">
+                    Original Audio · @{audioSheetReel.username}
+                  </p>
+                </div>
+              </div>
+              {/* Action buttons */}
+              <div className="px-5 flex flex-col gap-3">
+                <button
+                  type="button"
+                  data-ocid="reels.audio_use_for_reel.button"
+                  onClick={() => {
+                    showToast("Audio added to your Reel!");
+                    setAudioSheetReel(null);
+                  }}
+                  className="w-full py-4 rounded-2xl font-bold text-[15px] text-white active:scale-[0.98] transition-transform"
+                  style={{
+                    background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+                  }}
+                >
+                  🎬 Use for Reel
+                </button>
+                <button
+                  type="button"
+                  data-ocid="reels.audio_use_for_story.button"
+                  onClick={() => {
+                    showToast("Audio added to your Story!");
+                    setAudioSheetReel(null);
+                  }}
+                  className="w-full py-4 rounded-2xl font-bold text-[15px] text-white active:scale-[0.98] transition-transform"
+                  style={{
+                    background: "linear-gradient(135deg, #ec4899, #f97316)",
+                  }}
+                >
+                  ✨ Use for Story
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Global toasts */}
       <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 pointer-events-none">
